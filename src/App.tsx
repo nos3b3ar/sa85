@@ -1,0 +1,126 @@
+import { useEffect, useRef, useState } from 'react';
+import { ThemeProvider } from 'styled-components';
+import original from 'react95/dist/themes/original';
+import {
+  enterBiosSetupSounds,
+  fadeOutFan,
+  playStartupSound,
+  startBootSounds,
+  stopBootSounds,
+  unlockAudio,
+} from './audio/audio';
+import { BiosSetup } from './boot/BiosSetup';
+import { BootScreen } from './boot/BootScreen';
+import { PowerScreen } from './boot/PowerScreen';
+import { ScanDisk } from './boot/ScanDisk';
+import { SystemSummary } from './boot/SystemSummary';
+import { Desktop } from './desktop/Desktop';
+import { SplashScreen } from './splash/SplashScreen';
+import { GlobalStyles } from './styles/global';
+
+type Phase = 'power' | 'black' | 'post' | 'setup' | 'scandisk' | 'summary' | 'splash' | 'desktop';
+
+const fanStopBeforeDesktopMs = 1000;
+
+export default function App() {
+  const [phase, setPhase] = useState<Phase>('power');
+  const [bootId, setBootId] = useState(0);
+  const jinglePlayed = useRef(false);
+  const desktopTimer = useRef(0);
+
+  const playJingle = () => {
+    jinglePlayed.current = true;
+    playStartupSound('win98');
+  };
+
+  const skipToDesktop = () => {
+    unlockAudio();
+    window.clearTimeout(desktopTimer.current);
+    stopBootSounds();
+    if (!jinglePlayed.current) playJingle();
+    setPhase('desktop');
+  };
+
+  const boot = (withPowerButton: boolean) => {
+    unlockAudio();
+    window.clearTimeout(desktopTimer.current);
+    startBootSounds({ withPowerButton });
+    jinglePlayed.current = false;
+    setBootId((id) => id + 1);
+    setPhase('black');
+  };
+
+  useEffect(() => {
+    if (phase !== 'black') return;
+    let cancelled = false;
+    const fontReady = Promise.race([
+      document.fonts.load('16px "IBM VGA 8x16"').catch(() => undefined),
+      new Promise((resolve) => window.setTimeout(resolve, 1200)),
+    ]);
+    const blackout = new Promise((resolve) => window.setTimeout(resolve, 1200));
+    void Promise.all([fontReady, blackout]).then(() => {
+      if (!cancelled) setPhase('post');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, bootId]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (phase === 'power' || phase === 'setup' || phase === 'scandisk' || phase === 'desktop') return;
+      if (event.key !== 'Escape' && event.key !== ' ') return;
+      event.preventDefault();
+      skipToDesktop();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase]);
+
+  return (
+    <ThemeProvider theme={original}>
+      <GlobalStyles />
+      <div className="shell">
+        {phase === 'power' ? (
+          <PowerScreen
+            onPower={() => boot(true)}
+            onSkip={skipToDesktop}
+          />
+        ) : null}
+        {phase === 'post' ? (
+          <BootScreen
+            key={bootId}
+            onDone={() => setPhase('summary')}
+            onSetup={() => {
+              enterBiosSetupSounds();
+              setPhase('setup');
+            }}
+          />
+        ) : null}
+        {phase === 'setup' ? (
+          <BiosSetup onExit={() => boot(false)} onScanDisk={() => setPhase('scandisk')} />
+        ) : null}
+        {phase === 'scandisk' ? <ScanDisk onDone={() => setPhase('summary')} /> : null}
+        {phase === 'summary' ? <SystemSummary onDone={() => setPhase('splash')} /> : null}
+        {phase === 'splash' ? (
+          <SplashScreen
+            onSound={playJingle}
+            onDone={() => {
+              fadeOutFan();
+              desktopTimer.current = window.setTimeout(() => setPhase('desktop'), fanStopBeforeDesktopMs);
+            }}
+          />
+        ) : null}
+        {phase === 'desktop' ? (
+          <Desktop
+            onShutdown={() => {
+              stopBootSounds();
+              setPhase('power');
+            }}
+            onRestart={() => boot(false)}
+          />
+        ) : null}
+      </div>
+    </ThemeProvider>
+  );
+}

@@ -1,0 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = """\
+      frame-src https://web.archive.org \
+        https://cameronsworld.net https://www.cameronsworld.net \
+        https://zombo.com https://www.zombo.com \
+        https://windows93.net https://www.windows93.net \
+        https://theoldnet.com https://www.theoldnet.com \
+        https://toastytech.com https://www.toastytech.com \
+        https://winhistory.de https://www.winhistory.de \
+        https://arngren.net https://www.arngren.net; \
+      frame-ancestors 'none'; \
+      object-src 'none'; \
+      base-uri 'self'; \
+      form-action 'self'\
+      """
+    X-Content-Type-Options = "nosniff"

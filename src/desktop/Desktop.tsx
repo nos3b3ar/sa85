@@ -1,0 +1,168 @@
+import { useEffect, useState } from 'react';
+import { MenuList, MenuListItem } from 'react95';
+import { ScreensaverHost } from '../screensaver/ScreensaverHost';
+import { useSettings } from '../settings/settings';
+import { desktopApps } from '../apps/registry';
+import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
+import { AppWindow } from './AppWindow';
+import { DesktopIcon } from './DesktopIcon';
+import { DstDialog } from './DstDialog';
+import { ShutdownDialog } from './ShutdownDialog';
+import { StartMenu } from './StartMenu';
+import { Taskbar } from './Taskbar';
+import { useWindows, WindowManagerProvider } from './WindowManager';
+
+type DesktopProps = {
+  onShutdown: () => void;
+  onRestart: () => void;
+};
+
+export function Desktop(props: DesktopProps) {
+  return (
+    <WindowManagerProvider>
+      <DesktopView {...props} />
+    </WindowManagerProvider>
+  );
+}
+
+function DesktopView({ onShutdown, onRestart }: DesktopProps) {
+  const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
+  const settings = useSettings();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [dst, setDst] = useState<DstNotice | null>(() => shouldShowDstDialog());
+  const [shutdownOpen, setShutdownOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+      if (typing || event.key !== 'Enter' || !selected) return;
+      openApp(selected);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [openApp, selected]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[data-start-root]')) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [menuOpen]);
+
+  const activeId = windows
+    .filter((win) => !win.minimized)
+    .reduce<string | null>((top, win) => {
+      if (!top) return win.id;
+      const current = windows.find((item) => item.id === top);
+      return !current || win.z > current.z ? win.id : top;
+    }, null);
+
+  const onBackground = (target: EventTarget) =>
+    !(target as HTMLElement).closest(
+      '.desktop-icon, .app-window, [data-start-root], .taskbar, .dst-window, .shutdown-window, .context-menu',
+    );
+
+  const clearIfEmpty = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!(event.target as HTMLElement).closest('.context-menu')) setContextMenu(null);
+    if (!onBackground(event.target)) return;
+    setSelected(null);
+    setMenuOpen(false);
+  };
+
+  return (
+    <div
+      className="desktop"
+      style={{ backgroundColor: settings.desktopColor }}
+      onMouseDown={clearIfEmpty}
+      onContextMenu={(event) => {
+        if (!onBackground(event.target)) return;
+        event.preventDefault();
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }}
+    >
+      <div className="desktop-icons">
+        {desktopApps.filter((app) => app.showOnDesktop !== false).map((app) => (
+          <DesktopIcon
+            key={app.id}
+            app={app}
+            selected={selected === app.id}
+            onSelect={() => setSelected(app.id)}
+            onOpen={() => {
+              setMenuOpen(false);
+              openApp(app.id);
+            }}
+          />
+        ))}
+      </div>
+      {windows.map((win) => (
+        <AppWindow
+          key={win.id}
+          win={win}
+          active={win.id === activeId}
+          onClose={() => close(win.id)}
+          onFocus={() => focus(win.id)}
+          onMinimize={() => minimize(win.id)}
+          onMove={(x, y) => move(win.id, x, y)}
+        />
+      ))}
+      <Taskbar
+        windows={windows}
+        activeId={activeId}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen((open) => !open)}
+        onToggleTask={toggleTask}
+        onShowDesktop={toggleDesktop}
+        onOpenApp={openApp}
+        menu={(
+          <StartMenu
+            onOpen={(appId) => {
+              setMenuOpen(false);
+              openApp(appId);
+            }}
+            onShutdown={() => {
+              setMenuOpen(false);
+              setShutdownOpen(true);
+            }}
+          />
+        )}
+      />
+      {dst ? <DstDialog notice={dst} onClose={() => setDst(null)} /> : null}
+      {shutdownOpen ? (
+        <ShutdownDialog
+          onShutdown={onShutdown}
+          onRestart={onRestart}
+          onCancel={() => setShutdownOpen(false)}
+        />
+      ) : null}
+      {contextMenu ? (
+        <MenuList className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
+          <MenuListItem
+            size="sm"
+            onClick={() => {
+              setContextMenu(null);
+              toggleDesktop();
+            }}
+          >
+            Desktop anzeigen
+          </MenuListItem>
+          <MenuListItem
+            size="sm"
+            onClick={() => {
+              setContextMenu(null);
+              openApp('display');
+            }}
+          >
+            Eigenschaften
+          </MenuListItem>
+        </MenuList>
+      ) : null}
+      <ScreensaverHost />
+    </div>
+  );
+}
