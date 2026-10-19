@@ -9,11 +9,16 @@ export type Project = {
   url?: string;
 };
 
+/** Liegt rückwärts und Base64-codiert vor, damit Harvester die Adresse nicht im Bundle finden. */
+function decodeMail(encoded: string) {
+  return [...atob(encoded)].reverse().join('');
+}
+
 export const profile = {
   name: 'Stefan Andernach',
   brand: 'sa85',
   role: 'Software-Developer seit über 20 Jahren',
-  email: 'business@sa85.de',
+  email: decodeMail('ZWQuNThhc0Bzc2VuaXN1Yg=='),
   linkedinUrl: 'https://www.linkedin.com/in/stefan-andernach-7a2828322/',
   photo: '/img/stefan-andernach.jpg',
   location: 'Koblenz',
