@@ -15,6 +15,7 @@ import { User } from '@react95/icons/User';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { profile } from '../content/profile';
 import { NetscapeIcon } from './NetscapeIcon';
+import { SaForceIcon } from './SaForceIcon';
 import { WinampIcon } from './WinampIcon';
 import type { AppProps } from './types';
 
@@ -120,11 +121,19 @@ export const desktopApps: DesktopApp[] = [
     id: 'winamp',
     title: 'Winamp',
     icon: WinampIcon,
-    showOnDesktop: false,
     kind: 'window',
     component: lazyNamed(() => import('./WinampApp'), 'WinampApp'),
     defaultSize: { width: 413, height: 522 },
     chrome: 'skinned',
+  },
+  {
+    id: 'saforce',
+    title: 'Alien Force',
+    icon: SaForceIcon,
+    showOnDesktop: false,
+    startMenuGroup: 'games',
+    kind: 'link',
+    url: 'https://saforce.game.sa85.de/',
   },
   {
     id: 'games',

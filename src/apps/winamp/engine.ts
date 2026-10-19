@@ -2,7 +2,7 @@ import type { Song } from './songs';
 
 export type Track =
   | { id: string; title: string; artist: string; kind: 'synth'; song: Song }
-  | { id: string; title: string; artist: string; kind: 'file'; src: string };
+  | { id: string; title: string; artist: string; kind: 'file'; src: string; link?: string };
 
 export const eqBands = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000];
 
@@ -167,7 +167,9 @@ export class WinampEngine {
   private startFile(src: string, offset: number) {
     let node = this.files.get(src);
     if (!node) {
-      const element = new Audio(src);
+      const element = new Audio();
+      element.crossOrigin = 'anonymous';
+      element.src = src;
       element.preload = 'auto';
       const source = this.ctx.createMediaElementSource(element);
       source.connect(this.input);

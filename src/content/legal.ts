@@ -77,6 +77,14 @@ export const impressum: LegalDocument = {
           type: 'p',
           parts: ['Die Fenster und Symbole stammen aus der Bibliothek react95.'],
         },
+        {
+          type: 'p',
+          parts: [
+            'Die 30-Sekunden-Hörproben im Winamp-Player werden direkt von Apple Music gestreamt und nicht auf dieser Seite gespeichert. Alle Rechte an den Titeln liegen bei den jeweiligen Künstlern und Labels: ',
+            { label: 'music.apple.com', href: 'https://music.apple.com/de/' },
+            '.',
+          ],
+        },
       ],
     },
     {

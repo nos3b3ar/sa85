@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { PixelPowerButton } from './PixelPowerButton';
 
 type PowerScreenProps = {
   onPower: () => void;
@@ -40,24 +41,9 @@ export function PowerScreen({ onPower, onSkip }: PowerScreenProps) {
     <div className="power-screen">
       <div className="power-mark">SA85</div>
       <button className="power-btn" type="button" onClick={power} disabled={busy} aria-label="Einschalten">
-        <svg width="42" height="42" viewBox="0 0 42 42" aria-hidden>
-          <path
-            d="M21 6v14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M13 11a13 13 0 1 0 16 0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
+        <PixelPowerButton />
       </button>
-      <div>PRESS POWER</div>
+      <div className="power-label">PRESS POWER</div>
       <div className="power-hint">ENTER startet · ESC überspringt den Start</div>
     </div>
   );

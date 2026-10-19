@@ -5,16 +5,8 @@ import { SegmentDisplay } from './shared/SegmentDisplay';
 import type { AppProps, WindowChrome } from './types';
 import { WinampIcon } from './WinampIcon';
 import { eqBands, WinampEngine, type EqSettings, type Track } from './winamp/engine';
+import { fetchPreviews } from './winamp/previews';
 import { SkinSlider } from './winamp/SkinSlider';
-import { songs } from './winamp/songs';
-
-const initialTracks: Track[] = [
-  { id: 'korobeiniki', title: 'Korobeiniki (8-Bit Mix)', artist: 'Traditional', kind: 'synth', song: songs.korobeiniki },
-  { id: 'elise', title: 'Für Elise (Chiptune)', artist: 'Ludwig van Beethoven', kind: 'synth', song: songs.elise },
-  { id: 'mountain-king', title: 'In der Halle des Bergkönigs', artist: 'Edvard Grieg', kind: 'synth', song: songs.mountainKing },
-  { id: 'win98', title: 'Windows 98 Start', artist: 'Microsoft', kind: 'file', src: '/sounds/win98.mp3' },
-  { id: 'win95', title: 'Windows 95 Start', artist: 'Brian Eno', kind: 'file', src: '/sounds/win95.mp3' },
-];
 
 const presets: Array<{ name: string; preamp: number; bands: number[] }> = [
   { name: 'Flat', preamp: 0, bands: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
@@ -38,7 +30,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
   const visRef = useRef<HTMLCanvasElement>(null);
   const graphRef = useRef<HTMLCanvasElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [tracks, setTracks] = useState<Track[]>(initialTracks);
+  const [tracks, setTracks] = useState<Track[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState(0);
   const [status, setStatus] = useState<Status>('stopped');
@@ -54,9 +46,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
   const [autoEq, setAutoEq] = useState(false);
   const [presetsOpen, setPresetsOpen] = useState(false);
   const [eq, setEq] = useState<EqSettings>({ enabled: true, preamp: 0, bands: eqBands.map(() => 0) });
-  const [durations, setDurations] = useState<Record<string, number>>(() => Object.fromEntries(
-    initialTracks.flatMap((track) => (track.kind === 'synth' ? [[track.id, track.song.duration]] : [])),
-  ));
+  const [durations, setDurations] = useState<Record<string, number>>({});
   const scale = useScale();
   const innerRef = useRef<HTMLDivElement>(null);
   const innerHeight = useNaturalHeight(innerRef);
@@ -65,6 +55,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
   latest.current = { tracks, index, shuffle, repeat, volume, eq, balance };
 
   const track = tracks[index] ?? tracks[0];
+  const selectedTrack = tracks[selected];
   const duration = track ? durations[track.id] ?? 0 : 0;
   const shown = status === 'stopped' ? 0 : seekDrag ?? position;
 
@@ -76,6 +67,16 @@ export function WinampApp({ chrome, onClose }: AppProps) {
       probe.onloadedmetadata = () => setDurations((prev) => ({ ...prev, [item.id]: probe.duration }));
     });
   }, [tracks, durations]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPreviews(controller.signal)
+      .then((previews) => {
+        if (previews.length) setTracks((prev) => [...prev, ...previews.filter((item) => !prev.some((track) => track.id === item.id))]);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => () => {
     engineRef.current?.dispose();
@@ -468,6 +469,16 @@ export function WinampApp({ chrome, onClose }: AppProps) {
                 </div>
               ))}
             </div>
+            {tracks.some((item) => item.kind === 'file' && item.link) ? (
+              <a
+                className="wa-pl-credit"
+                href={(selectedTrack?.kind === 'file' && selectedTrack.link) || 'https://music.apple.com/de/'}
+                target="_blank"
+                rel="noreferrer"
+              >
+                30-Sek.-Vorschauen: Apple Music
+              </a>
+            ) : null}
             <div className="wa-pl-bottom">
               <div className="wa-pl-buttons">
                 <button type="button" className="wa-text-btn" title="Dateien hinzufügen" onClick={() => fileInput.current?.click()}>ADD</button>
