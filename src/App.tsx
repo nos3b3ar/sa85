@@ -38,7 +38,7 @@ export default function App() {
 
   const playJingle = () => {
     jinglePlayed.current = true;
-    playStartupSound('win98');
+    void playStartupSound('win98');
   };
 
   const skipToDesktop = () => {

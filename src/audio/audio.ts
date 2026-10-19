@@ -2,7 +2,11 @@ import { effectiveVolume, onSettingsChange } from '../settings/settings';
 
 let audioContext: AudioContext | null = null;
 
-const tracks: Partial<Record<'win95' | 'win98', HTMLAudioElement>> = {};
+type StartupTrack = 'win95' | 'win98';
+
+const tracks: Partial<Record<StartupTrack, HTMLAudioElement>> = {};
+const startupBuffers: Partial<Record<StartupTrack, Promise<AudioBuffer | null>>> = {};
+let startupVoice: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
 
 function context(): AudioContext | null {
   const AudioCtx = window.AudioContext
@@ -37,6 +41,17 @@ export function getAudioContext() {
 export function unlockAudio() {
   context();
   void loadFanBuffer();
+  void loadStartupBuffer('win98');
+}
+
+function loadStartupBuffer(which: StartupTrack) {
+  const ctx = context();
+  if (!ctx) return Promise.resolve(null);
+  startupBuffers[which] ??= fetch(`/sounds/${which}.mp3`)
+    .then((response) => response.arrayBuffer())
+    .then((data) => ctx.decodeAudioData(data))
+    .catch(() => null);
+  return startupBuffers[which];
 }
 
 function preloadedAudio(src: string) {
@@ -170,7 +185,26 @@ export function playKeyPress() {
   void audio.play().catch(() => undefined);
 }
 
-export function playStartupSound(which: 'win95' | 'win98' = 'win98') {
+// iOS blockiert audio.play() außerhalb einer Nutzergeste; der beim Einschalten entsperrte AudioContext darf weiterspielen.
+export async function playStartupSound(which: StartupTrack = 'win98') {
+  const ctx = context();
+  const buffer = await loadStartupBuffer(which);
+  if (ctx && buffer) {
+    startupVoice?.source.stop();
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = startupVolume();
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    const voice = { source, gain };
+    source.onended = () => {
+      if (startupVoice === voice) startupVoice = null;
+    };
+    startupVoice = voice;
+    source.start();
+    return;
+  }
   const audio = tracks[which] ?? new Audio(`/sounds/${which}.mp3`);
   tracks[which] = audio;
   audio.volume = startupVolume();
@@ -191,6 +225,7 @@ onSettingsChange(() => {
     if (!audio.paused) audio.volume = effectiveVolume();
   });
   if (fan) fan.gain.gain.value = effectiveVolume();
+  if (startupVoice) startupVoice.gain.gain.value = startupVolume();
   Object.values(tracks).forEach((audio) => {
     if (audio && !audio.paused) audio.volume = startupVolume();
   });
