@@ -11,7 +11,7 @@ type Notice = {
   message: string;
 };
 
-export function ContactApp({ onClose }: AppProps) {
+export function ContactApp({ onClose, openApp }: AppProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
@@ -45,10 +45,10 @@ export function ContactApp({ onClose }: AppProps) {
       setMessage('');
       setNotice({
         title: 'Kontakt',
-        message: 'Die Nachricht liegt im Postausgang. Der Versand an business@sa85.de wird angebunden, sobald das Postfach verbunden ist.',
+        message: 'Die Nachricht wurde gesendet.',
       });
     } catch {
-      setNotice({ title: 'Kontakt', message: 'Die Nachricht konnte nicht abgelegt werden.' });
+      setNotice({ title: 'Kontakt', message: 'Die Nachricht konnte nicht gesendet werden.' });
     } finally {
       setSending(false);
     }
@@ -66,6 +66,10 @@ export function ContactApp({ onClose }: AppProps) {
           <span>Abbrechen</span>
         </Button>
       </div>
+      <p className="form-note mail-privacy">
+        Ihre Angaben werden nur zur Bearbeitung Ihrer Anfrage verwendet. Details:{' '}
+        <button type="button" className="text-link" onClick={() => openApp('datenschutz')}>Datenschutz</button>
+      </p>
       <div className="mail-headers">
         <label className="form-row">
           <span>An:</span>

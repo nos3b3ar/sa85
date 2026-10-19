@@ -11,7 +11,7 @@ export type Project = {
 
 export const profile = {
   name: 'Stefan Andernach',
-  brand: 'Stefan Andernach85',
+  brand: 'sa85',
   role: 'Software-Developer seit über 20 Jahren',
   email: 'business@sa85.de',
   linkedinUrl: 'https://www.linkedin.com/in/stefan-andernach-7a2828322/',

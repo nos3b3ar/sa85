@@ -1,6 +1,6 @@
 import { Folder } from '@react95/icons/Folder';
 import { useState } from 'react';
-import { MenuList, MenuListItem } from 'react95';
+import { MenuList, MenuListItem, Separator } from 'react95';
 import { desktopApps, type DesktopApp } from '../apps/registry';
 import { WindowsLogo } from './WindowsLogo';
 
@@ -16,7 +16,7 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
 
   return (
     <div className="start-menu">
-      <div className="start-banner">Andernach85</div>
+      <div className="start-banner">sa85</div>
       <MenuList>
         {visible.filter((app) => !app.startMenuGroup).map((app) => (
           <MenuListItem key={app.id} onClick={() => onOpen(app.id)} onMouseEnter={() => setGamesOpen(false)}>
@@ -27,7 +27,7 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
           <MenuListItem
             className={gamesOpen ? 'start-group is-open' : 'start-group'}
             onMouseEnter={() => setGamesOpen(true)}
-            onClick={() => setGamesOpen(true)}
+            onClick={() => setGamesOpen((open) => !open)}
           >
             <span className="start-item">
               <Folder variant="16x16_4" />
@@ -51,6 +51,7 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
             ) : null}
           </MenuListItem>
         ) : null}
+        <Separator />
         <MenuListItem className="start-shutdown" onClick={onShutdown} onMouseEnter={() => setGamesOpen(false)}>
           <span className="start-item">
             <WindowsLogo />

@@ -15,6 +15,7 @@ import { PowerScreen } from './boot/PowerScreen';
 import { ScanDisk } from './boot/ScanDisk';
 import { SystemSummary } from './boot/SystemSummary';
 import { Desktop } from './desktop/Desktop';
+import { LegalLinks } from './desktop/LegalLinks';
 import { SplashScreen } from './splash/SplashScreen';
 import { GlobalStyles } from './styles/global';
 
@@ -22,8 +23,15 @@ type Phase = 'power' | 'black' | 'post' | 'setup' | 'scandisk' | 'summary' | 'sp
 
 const fanStopBeforeDesktopMs = 1000;
 
+function appFromLocation() {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (path === '/impressum' || path === '/datenschutz') return path.slice(1);
+  return null;
+}
+
 export default function App() {
-  const [phase, setPhase] = useState<Phase>('power');
+  const [bootApp, setBootApp] = useState<string | null>(appFromLocation);
+  const [phase, setPhase] = useState<Phase>(bootApp ? 'desktop' : 'power');
   const [bootId, setBootId] = useState(0);
   const jinglePlayed = useRef(false);
   const desktopTimer = useRef(0);
@@ -40,6 +48,13 @@ export default function App() {
     if (!jinglePlayed.current) playJingle();
     setPhase('desktop');
   };
+
+  const openLegal = (appId: string) => {
+    setBootApp(appId);
+    skipToDesktop();
+  };
+
+  const linkTone = phase === 'splash' ? 'splash' : phase === 'setup' || phase === 'scandisk' ? 'setup' : 'bios';
 
   const boot = (withPowerButton: boolean) => {
     unlockAudio();
@@ -113,13 +128,17 @@ export default function App() {
         ) : null}
         {phase === 'desktop' ? (
           <Desktop
+            initialApp={bootApp}
+            onInitialAppOpened={() => setBootApp(null)}
             onShutdown={() => {
               stopBootSounds();
               setPhase('power');
             }}
             onRestart={() => boot(false)}
           />
-        ) : null}
+        ) : (
+          <LegalLinks tone={linkTone} onOpen={openLegal} />
+        )}
       </div>
     </ThemeProvider>
   );

@@ -5,13 +5,19 @@ export type ContactMessage = {
   message: string;
 };
 
-/**
- * Platzhalter, bis ein Mailversand an business@sa85.de hängt.
- * Vorgesehener Weg: Netlify Function mit Microsoft Graph
- * POST /users/business@sa85.de/sendMail (Application Permission Mail.Send,
- * auf dieses eine Postfach beschränkt).
- */
 export async function sendContact(payload: ContactMessage): Promise<void> {
-  await new Promise((resolve) => window.setTimeout(resolve, 650));
-  console.info('[sa85] Kontaktformular liegt bereit, Versand ist noch nicht angebunden.', payload);
+  const body = new URLSearchParams({
+    'form-name': 'contact',
+    name: payload.name,
+    email: payload.email,
+    subject: payload.subject,
+    message: payload.message,
+    company: '',
+  });
+  const response = await fetch('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  if (!response.ok) throw new Error('Die Nachricht konnte nicht gesendet werden.');
 }

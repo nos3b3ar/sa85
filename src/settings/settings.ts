@@ -21,6 +21,9 @@ export type Settings = {
   saverWaitSeconds: number;
   saverText3d: string;
   saverMarqueeText: string;
+  /** Einwahl-Dialog des Retro-Browsers nicht erneut zeigen. */
+  autoConnect: boolean;
+  iconPositions: Record<string, { x: number; y: number }>;
 };
 
 const storageKey = 'sa85-settings';
@@ -31,17 +34,35 @@ export const defaultSettings: Settings = {
   desktopColor: '#008080',
   saver: 'pipes',
   saverWaitSeconds: 30,
-  saverText3d: 'Andernach85',
+  saverText3d: 'sa85',
   saverMarqueeText: 'Willkommen auf dem Schreibtisch von Stefan Andernach!',
+  autoConnect: false,
+  iconPositions: {},
 };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();
 
+function readIconPositions(value: unknown): Settings['iconPositions'] {
+  if (!value || typeof value !== 'object') return {};
+  const positions: Settings['iconPositions'] = {};
+  for (const [id, point] of Object.entries(value)) {
+    if (!point || typeof point !== 'object') continue;
+    const { x, y } = point as { x?: unknown; y?: unknown };
+    if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+      positions[id] = { x, y };
+    }
+  }
+  return positions;
+}
+
 function load(): Settings {
   try {
     const raw = window.localStorage.getItem(storageKey);
-    return raw ? { ...defaultSettings, ...(JSON.parse(raw) as Partial<Settings>) } : defaultSettings;
+    if (!raw) return defaultSettings;
+    const stored = JSON.parse(raw) as Partial<Settings>;
+    if (stored.saverText3d === 'Andernach85') stored.saverText3d = 'sa85';
+    return { ...defaultSettings, ...stored, iconPositions: readIconPositions(stored.iconPositions) };
   } catch {
     return defaultSettings;
   }

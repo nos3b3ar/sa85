@@ -444,17 +444,9 @@
   --taskbar-height: 40px;
 }
 
-.desktop-icons {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  height: calc(100% - var(--taskbar-height));
-  padding: 6px;
-  gap: 2px;
-}
-
 .desktop-icon {
+  position: absolute;
+  z-index: 1;
   width: 84px;
   display: flex;
   flex-direction: column;
@@ -465,9 +457,17 @@
   background: transparent;
   color: #fff;
   cursor: default;
+  touch-action: none;
+  user-select: none;
+}
+
+.desktop-icon.is-dragging {
+  z-index: 3;
 }
 
 .desktop-icon span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   text-align: center;
   text-shadow: 1px 1px 0 #000;
   line-height: 1.15;
@@ -2430,9 +2430,17 @@
 .resize-se {
   bottom: -2px;
   right: -2px;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   cursor: nwse-resize;
+}
+
+.app-window > span[data-testid="resizeHandle"] {
+  width: 15px;
+  height: 15px;
+  right: 3px;
+  bottom: 3px;
+  background-size: 5px 5px;
 }
 
 .about-layout {
@@ -2703,4 +2711,186 @@
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+.legal-links {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  z-index: 8000;
+  display: flex;
+  gap: 14px;
+}
+
+.legal-links button {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.legal-links.is-bios {
+  color: #9ee7ff;
+  font-family: "IBM VGA 8x16", "Courier New", monospace;
+  font-size: 14px;
+}
+
+.legal-links.is-bios button:hover,
+.legal-links.is-bios button:focus-visible {
+  color: #d8fbff;
+}
+
+.legal-links.is-setup {
+  color: #fff;
+  font-family: "IBM VGA 8x16", "Courier New", monospace;
+  font-size: 14px;
+}
+
+.legal-links.is-splash {
+  color: #fff;
+  font-family: "MS Sans Serif", Tahoma, sans-serif;
+  font-size: 11px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #c0c0c0;
+}
+
+.app-window-body:has(.editor) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-menubar {
+  display: flex;
+  gap: 2px;
+  padding: 2px 2px 4px;
+  user-select: none;
+}
+
+.editor-menu {
+  padding: 1px 6px;
+}
+
+.editor-page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #dfdfdf;
+  padding: 10px 14px 16px;
+  line-height: 1.35;
+}
+
+.editor-page h2 {
+  margin: 14px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.editor-page h2:first-child {
+  margin-top: 0;
+}
+
+.editor-page p {
+  margin: 0 0 8px;
+}
+
+.text-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #0000ee;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.form-note {
+  margin: 12px 0 0;
+}
+
+.mail-privacy {
+  margin: 0;
+  padding: 4px 8px 2px;
+  font-size: 11px;
+}
+
+.browser-offline {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  background: #c0c0c0;
+  text-align: center;
+  padding: 12px;
+}
+
+.browser-offline p {
+  margin: 0;
+}
+
+.dialup {
+  width: min(440px, calc(100% - 8px));
+}
+
+.dialup-body {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.dialup-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.dialup-copy p {
+  margin: 0 0 8px;
+  text-align: left;
+}
+
+.dialup-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.dialup-note {
+  margin: 8px 0 0;
+  text-align: left;
+}
+
+.dialup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dialup-status {
+  min-height: 2.6em;
+  text-align: left;
+}
+
+.tray-menu {
+  position: absolute !important;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 5200;
+  min-width: 160px;
 }

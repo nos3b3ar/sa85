@@ -2,7 +2,10 @@ import { Ie } from '@react95/icons/Ie';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Frame, MenuList, MenuListItem, Separator, TextInput } from 'react95';
 import { bookmarks, homePages, resolveAddress, type WebPage } from '../content/web';
+import { connect, disconnect, isOnline, useOnline } from './browser/connection';
+import { DialupDialog } from './browser/DialupDialog';
 import { NetscapeIcon } from './NetscapeIcon';
+import type { AppProps } from './types';
 
 type Flavor = 'ie' | 'netscape';
 
@@ -35,9 +38,10 @@ const labels = {
 
 type BrowserProps = {
   flavor: Flavor;
+  openApp: (appId: string) => void;
 };
 
-function BrowserApp({ flavor }: BrowserProps) {
+function BrowserApp({ flavor, openApp }: BrowserProps) {
   const text = labels[flavor];
   const home = homePages[flavor];
   const [history, setHistory] = useState<WebPage[]>([home]);
@@ -47,7 +51,10 @@ function BrowserApp({ flavor }: BrowserProps) {
   const [stopped, setStopped] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState(() => !isOnline());
   const menuRef = useRef<HTMLDivElement>(null);
+  const online = useOnline();
+  const wasOnline = useRef(online);
 
   const page = history[index];
 
@@ -55,7 +62,17 @@ function BrowserApp({ flavor }: BrowserProps) {
     setAddress(page.url);
     setLoading(true);
     setStopped(false);
+    if (!isOnline()) setPrompt(true);
   }, [page, reloadKey]);
+
+  useEffect(() => {
+    if (online) setPrompt(false);
+    if (online && !wasOnline.current) {
+      setLoading(true);
+      setStopped(false);
+    }
+    wasOnline.current = online;
+  }, [online]);
 
   useEffect(() => {
     if (!openMenu) return;
@@ -78,11 +95,20 @@ function BrowserApp({ flavor }: BrowserProps) {
     if (next) navigate(next);
   };
 
-  const status = stopped
-    ? 'Vorgang abgebrochen'
-    : loading
-      ? `Website wird geöffnet: ${page.url}`
-      : 'Fertig';
+  const goOffline = () => {
+    disconnect();
+    setPrompt(false);
+    setOpenMenu(null);
+    setLoading(false);
+  };
+
+  const status = !online
+    ? 'Offline'
+    : stopped
+      ? 'Vorgang abgebrochen'
+      : loading
+        ? `Website wird geöffnet: ${page.url}`
+        : 'Fertig';
 
   return (
     <div className={`browser browser-${flavor}`}>
@@ -108,6 +134,17 @@ function BrowserApp({ flavor }: BrowserProps) {
                   <MenuListItem size="sm" onClick={() => navigate(home)}>
                     Info über {text.product}
                   </MenuListItem>
+                ) : menu === 'Datei' ? (
+                  <>
+                    <MenuListItem size="sm" onClick={() => navigate(home)}>{text.home}</MenuListItem>
+                    {online ? (
+                      <MenuListItem size="sm" onClick={goOffline}>Offline arbeiten</MenuListItem>
+                    ) : (
+                      <MenuListItem size="sm" onClick={() => { setPrompt(true); setOpenMenu(null); }}>
+                        Verbinden...
+                      </MenuListItem>
+                    )}
+                  </>
                 ) : (
                   <>
                     <MenuListItem size="sm" onClick={() => navigate(home)}>{text.home}</MenuListItem>
@@ -160,7 +197,7 @@ function BrowserApp({ flavor }: BrowserProps) {
         <Button type="submit" variant="thin">{text.go}</Button>
       </form>
       <Frame variant="field" className="browser-view">
-        {stopped ? null : (
+        {online && !stopped ? (
           <iframe
             key={`${page.src}-${reloadKey}`}
             title={page.title}
@@ -169,6 +206,21 @@ function BrowserApp({ flavor }: BrowserProps) {
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             onLoad={() => setLoading(false)}
           />
+        ) : (
+          <div className="browser-offline">
+            {prompt ? (
+              <DialupDialog
+                onConnect={connect}
+                onOffline={goOffline}
+                onPrivacy={() => openApp('datenschutz')}
+              />
+            ) : (
+              <>
+                <p>Es besteht keine Verbindung mit dem Internet.</p>
+                <Button onClick={() => setPrompt(true)}>Verbinden</Button>
+              </>
+            )}
+          </div>
         )}
       </Frame>
       <Frame variant="status" className="browser-status">{status}</Frame>
@@ -176,10 +228,10 @@ function BrowserApp({ flavor }: BrowserProps) {
   );
 }
 
-export function InternetExplorerApp() {
-  return <BrowserApp flavor="ie" />;
+export function InternetExplorerApp({ openApp }: AppProps) {
+  return <BrowserApp flavor="ie" openApp={openApp} />;
 }
 
-export function NetscapeApp() {
-  return <BrowserApp flavor="netscape" />;
+export function NetscapeApp({ openApp }: AppProps) {
+  return <BrowserApp flavor="netscape" openApp={openApp} />;
 }

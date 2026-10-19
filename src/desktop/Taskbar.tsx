@@ -1,14 +1,16 @@
 import { Desktop as DesktopGlyph } from '@react95/icons/Desktop';
 import { Ie } from '@react95/icons/Ie';
+import { Rnaui101 } from '@react95/icons/Rnaui101';
 import { Mailnews2 } from '@react95/icons/Mailnews2';
 import { Mute } from '@react95/icons/Mute';
 import { Unmute } from '@react95/icons/Unmute';
 import { useEffect, useRef, useState } from 'react';
-import { AppBar, Button, Frame, Toolbar, Window, WindowContent } from 'react95';
+import { AppBar, Button, Frame, MenuList, MenuListItem, Toolbar, Window, WindowContent } from 'react95';
 import { getApp } from '../apps/registry';
 import { NetscapeIcon } from '../apps/NetscapeIcon';
 import { WinampIcon } from '../apps/WinampIcon';
 import { VolumeControl } from '../apps/VolumeControl';
+import { disconnect, useOnline } from '../apps/browser/connection';
 import { useSettings } from '../settings/settings';
 import type { ManagedWindow } from './WindowManager';
 import { WindowsLogo } from './WindowsLogo';
@@ -36,17 +38,22 @@ export function Taskbar({
 }: TaskbarProps) {
   const now = useClock();
   const settings = useSettings();
+  const online = useOnline();
   const [volumeOpen, setVolumeOpen] = useState(false);
+  const [linkMenu, setLinkMenu] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!volumeOpen) return;
+    if (!volumeOpen && !linkMenu) return;
     const close = (event: MouseEvent) => {
-      if (!trayRef.current?.contains(event.target as Node)) setVolumeOpen(false);
+      if (!trayRef.current?.contains(event.target as Node)) {
+        setVolumeOpen(false);
+        setLinkMenu(false);
+      }
     };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
-  }, [volumeOpen]);
+  }, [volumeOpen, linkMenu]);
 
   const silent = settings.muted || settings.volume === 0;
   const SpeakerIcon = silent ? Mute : Unmute;
@@ -107,13 +114,43 @@ export function Taskbar({
               </WindowContent>
             </Window>
           ) : null}
+          {linkMenu ? (
+            <MenuList className="tray-menu">
+              <MenuListItem
+                size="sm"
+                onClick={() => {
+                  disconnect();
+                  setLinkMenu(false);
+                }}
+              >
+                Trennen
+              </MenuListItem>
+            </MenuList>
+          ) : null}
           <Frame variant="status" className="tray">
+            {online ? (
+              <button
+                type="button"
+                className="tray-icon"
+                title="Verbindung hergestellt"
+                aria-label="Verbindung hergestellt"
+                onClick={() => {
+                  setVolumeOpen(false);
+                  setLinkMenu((open) => !open);
+                }}
+              >
+                <Rnaui101 variant="16x16_4" />
+              </button>
+            ) : null}
             <button
               type="button"
               className="tray-icon"
               title={silent ? 'Lautstärke (Ton aus)' : `Lautstärke ${Math.round(settings.volume * 100)}%`}
               aria-label="Lautstärke"
-              onClick={() => setVolumeOpen((open) => !open)}
+              onClick={() => {
+                setLinkMenu(false);
+                setVolumeOpen((open) => !open);
+              }}
               onDoubleClick={() => {
                 setVolumeOpen(false);
                 onOpenApp('volume');

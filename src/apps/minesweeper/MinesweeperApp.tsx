@@ -152,7 +152,7 @@ export function MinesweeperApp({ onClose }: AppProps) {
       {about ? (
         <AlertDialog
           title="Info: Minesweeper"
-          message="Minesweeper für Andernach85. Linksklick deckt auf, Rechtsklick (oder lange drücken) setzt eine Flagge. Klick auf eine Zahl deckt die Nachbarn auf, wenn alle Flaggen gesetzt sind."
+          message="Minesweeper für sa85. Linksklick deckt auf, Rechtsklick (oder lange drücken) setzt eine Flagge. Klick auf eine Zahl deckt die Nachbarn auf, wenn alle Flaggen gesetzt sind."
           onClose={() => setAbout(false)}
         />
       ) : null}

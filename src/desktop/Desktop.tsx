@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MenuList, MenuListItem } from 'react95';
 import { ScreensaverHost } from '../screensaver/ScreensaverHost';
-import { useSettings } from '../settings/settings';
+import { getSettings, updateSettings, useSettings } from '../settings/settings';
 import { desktopApps } from '../apps/registry';
+import { defaultIconPosition } from './iconLayout';
 import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
 import { DesktopIcon } from './DesktopIcon';
@@ -13,6 +14,8 @@ import { Taskbar } from './Taskbar';
 import { useWindows, WindowManagerProvider } from './WindowManager';
 
 type DesktopProps = {
+  initialApp?: string | null;
+  onInitialAppOpened?: () => void;
   onShutdown: () => void;
   onRestart: () => void;
 };
@@ -25,14 +28,29 @@ export function Desktop(props: DesktopProps) {
   );
 }
 
-function DesktopView({ onShutdown, onRestart }: DesktopProps) {
+function DesktopView({ initialApp, onInitialAppOpened, onShutdown, onRestart }: DesktopProps) {
   const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
+  const openedInitial = useRef(false);
   const settings = useSettings();
   const [selected, setSelected] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [dst, setDst] = useState<DstNotice | null>(() => shouldShowDstDialog());
   const [shutdownOpen, setShutdownOpen] = useState(false);
+  const [, setViewport] = useState(0);
+
+  useEffect(() => {
+    const onResize = () => setViewport((tick) => tick + 1);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (openedInitial.current || !initialApp) return;
+    openedInitial.current = true;
+    openApp(initialApp);
+    onInitialAppOpened?.();
+  }, [initialApp, onInitialAppOpened, openApp]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -86,20 +104,24 @@ function DesktopView({ onShutdown, onRestart }: DesktopProps) {
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
     >
-      <div className="desktop-icons">
-        {desktopApps.filter((app) => app.showOnDesktop !== false).map((app) => (
-          <DesktopIcon
-            key={app.id}
-            app={app}
-            selected={selected === app.id}
-            onSelect={() => setSelected(app.id)}
-            onOpen={() => {
-              setMenuOpen(false);
-              openApp(app.id);
-            }}
-          />
-        ))}
-      </div>
+      {desktopApps.filter((app) => app.showOnDesktop !== false).map((app) => (
+        <DesktopIcon
+          key={app.id}
+          app={app}
+          position={settings.iconPositions[app.id] ?? defaultIconPosition(app.id)}
+          selected={selected === app.id}
+          onSelect={() => setSelected(app.id)}
+          onOpen={() => {
+            setMenuOpen(false);
+            openApp(app.id);
+          }}
+          onMove={(position) => {
+            updateSettings({
+              iconPositions: { ...getSettings().iconPositions, [app.id]: position },
+            });
+          }}
+        />
+      ))}
       {windows.map((win) => (
         <AppWindow
           key={win.id}

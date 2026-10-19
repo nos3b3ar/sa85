@@ -50,10 +50,10 @@ export function SplashScreen({ onSound, onDone }: SplashScreenProps) {
     <div className="splash">
       <div className="splash-stage">
         <div className="splash-logo">
-          <div className="splash-brand">Stefan<sup>®</sup></div>
+          <div className="splash-brand">Stefan<sup>™</sup></div>
           <div className="splash-word">
             <span>Andernach</span>
-            <sup>®</sup>
+            <sup>™</sup>
             <span className="splash-number">85</span>
           </div>
         </div>
