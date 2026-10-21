@@ -12,7 +12,7 @@ todos:
     content: bootfail-Phase bei nicht bootfähiger Reihenfolge/entferntem HDD; Award-Text DISK BOOT FAILURE… plus playDiskBootFailureBeep
     status: pending
   - id: usb-boot
-    content: USB-HDD/USB-ZIP in Boot Sequence; BIOS-Zustimmungsdialog dann showDirectoryPicker mode read; Fallback Firefox/Safari/iOS
+    content: USB-HDD/USB-ZIP in Boot Sequence inkl. Bestätigungsdialog an BIOS-FEATURES-Stelle; showDirectoryPicker mode read; Fallback; Startpfad js-dos/v86 laut Inhaltsliste
     status: pending
   - id: post-hooks
     content: BootScreen an CMOS koppeln (Quick Boot kürzt Memory-Test, Floppy Seek hörbar/animiert, Setup-Prompt ein/aus)
@@ -85,7 +85,7 @@ Zweispaltige Feldliste (Award-Stil), Werte per `+/-` oder PgUp/PgDn:
 | **Virus Warning** | Disabled | Enabled: beim nächsten „Boot“ einmalig Award-Warntext `! WARNING ! Disk boot sector is to be modified…` (nur kosmetisch / Pause mit Y/N) |
 | **CPU Internal/External Cache** | Enabled | Anzeige; Disabled → kurzer Hinweis im Summary „Cache Disabled“ |
 | **Quick Power On Self Test** | Enabled | **Koppelt an POST:** Enabled kürzt `memoryDurationMs` und IDE-Delays in [src/boot/BootScreen.tsx](src/boot/BootScreen.tsx); Disabled = heutiges langsames Hochzählen |
-| **First / Second / Third Boot Device** | HDD-0 / CDROM / Floppy | Steuert Boot-Erfolg (Abschnitt 3); zusätzlich Award-Werte `USB-HDD` / `USB-ZIP` (Abschnitt 7) |
+| **First / Second / Third Boot Device** | HDD-0 / CDROM / Floppy | Steuert Boot-Erfolg (Abschnitt 3); zusätzlich Award-Werte `USB-HDD` / `USB-ZIP` (siehe unten + Abschnitt 7) |
 | **Boot Up Floppy Seek** | Enabled | Enabled: kurzes Floppy-Seek-Geräusch (`tone` oder bestehendes Seek-Feeling) + 200–400 ms Pause nach Memory-Test; Disabled = überspringen (wie Phoenix „Floppy check“) |
 | **Boot Up NumLock Status** | On | Merkt `cmos.numLock`; optional Taskleisten-/Desktop-Hinweis oder nur CMOS-Echo (Browser kann echte NumLock selten setzen) |
 | **Gate A20 Option** | Fast | Rein kosmetisch |
@@ -93,6 +93,15 @@ Zweispaltige Feldliste (Award-Stil), Werte per `+/-` oder PgUp/PgDn:
 | **Security Option** | Setup | Setup = Passwort nur für DEL-Setup; System = zusätzlich Boot-Prompt vor Windows |
 
 **Default Boot Device = `HDD-0`** (= `machine.hddModel` / C:), damit Besucher ohne Setup-Besuch unverändert Windows erreichen.
+
+### Boot Sequence / USB an dieser Setup-Stelle
+Die Boot-Geräte-Liste auf dieser Unterseite (First/Second/Third bzw. ältere Award-`Boot Sequence`) ist der **Einstellort** für USB:
+
+- Per `+/-` / PgUp/PgDn erscheinen u. a. `HDD-0`, `Floppy`, `CDROM`, **`USB-HDD`**, **`USB-ZIP`**, `Disabled` (Award-typische USB-Einträge der späteren 4.5x-/Phoenix-Award-Ära).
+- Setzt der Nutzer z. B. First = `USB-HDD` und speichert, wertet der nächste Boot diese Wahl aus (Abschnitt 3 + 7): Zuerst der **BIOS-Zustimmungsdialog** („Zugriff auf USB-Stick erlauben?“), Bestätigung per Klick oder Enter — das simulierte „Stick einstecken“ und zugleich die erforderliche Nutzergeste.
+- Erst danach `showDirectoryPicker({ mode: 'read' })` (nur Lesen). Abbruch des Dialogs oder des Pickers → wie leeres USB-Laufwerk → `bootfail`.
+- Optional dieselbe Bestätigung schon **probeweise** aus der Boot-Priority-Zeile heraus (Enter auf dem USB-Eintrag = „Detect USB device…“), ohne SAVE — analog IDE Auto Detection; wirksam für den Windows-/Alternativ-Boot bleibt trotzdem nur SAVE & EXIT.
+- Durchgängiger Ablauf: **BIOS FEATURES (hier) → SAVE → Zustimmungsdialog → Picker → Inhalt starten oder Failure** (Details und Formate: Abschnitte 7–8).
 
 ## 3. Boot-Reihenfolge → Windows oder Failure
 **Regel:** Phasen `summary` → `splash` → `desktop` nur, wenn das erste *wirksame* bootfähige Gerät die Systemplatte ist (`hddPresent && first usable === 'HDD-0'`).
@@ -165,9 +174,37 @@ Award-Boards der späten 90er/frühen 2000er listeten in der Boot Sequence oft *
 - **iPhone/iPad:** USB-Boot irrelevant — Menüpunkt ausblenden oder kurz als „N/A“ führen, keinen Picker anbieten.
 - **WebUSB ist keine Option:** Chrome sperrt Massenspeicher-Klassen; Stick-Dateisystem darüber nicht nutzbar.
 
-Technik-Hinweis: kleine Hilfsfunktion z. B. in `src/boot/usbBoot.ts` (Feature-Detect `showDirectoryPicker`, Dialog-Komponente im Setup-/BIOS-Look, Fallback-Input versteckt). Anbindung in [src/App.tsx](src/App.tsx) beim Auswerten der Boot-Order nach SAVE & EXIT / POST.
+Technik-Hinweis: kleine Hilfsfunktion z. B. in `src/boot/usbBoot.ts` (Feature-Detect `showDirectoryPicker`, Dialog-Komponente im Setup-/BIOS-Look, Fallback-Input versteckt). Anbindung in [src/App.tsx](src/App.tsx) beim Auswerten der Boot-Order nach SAVE & EXIT / POST. Der Bestätigungsdialog gehört fachlich zur Boot-Sequence in Abschnitt 2; dieser Abschnitt beschreibt den Laufzeitpfad.
 
-## 8. Cooles, aber retro-treu
+### Was der Emulator im Projekt heute kann
+Ist-Stand laut [public/dos/index.html](public/dos/index.html), [src/apps/DosApp.tsx](src/apps/DosApp.tsx), [src/content/dosGames.ts](src/content/dosGames.ts):
+- **js-dos 8** (DOSBox-Backend): akzeptiert **`.zip`** und **`.jsdos`**. Bundles mit `.jsdos/dosbox.conf` starten direkt; sonstige ZIPs werden mit generierter `dosbox.conf` + `initFs` gemountet (EXE/COM/BAT im Archiv).
+- **Kein natives Booten von `.img` / `.iso` / Roh-Floppy** in der aktuellen DOS-Box — solche Images brauchen einen zweiten Pfad.
+- **v86** ([copy/v86](https://github.com/copy/v86), Demo [copy.sh/v86](https://copy.sh/v86/)): sinnvoll als **optionale** Phase für echte Disketten-/USB-Images und kleine Fremd-OS (KolibriOS, FreeDOS-IMG, Boot-Sector). Nicht einbauen, bevor der js-dos-Pfad für ZIP/JSDOS auf dem Stick steht; WebUSB bleibt tabu.
+
+Start-Logik nach erfolgreichem Picker (Vorschlag):
+1. Im Stick-Verzeichnis nach `.jsdos` / `.zip` mit DOS-Programm suchen → bestehende js-dos-Pipeline (`Dos` / `DosMode`).
+2. Sonst `.img` / `.flp` / 512-Byte-Bootsector → optional v86; fehlt v86 → klare BIOS-Zeile „Unsupported boot media“ / `bootfail`.
+3. Nichts Passendes → `DISK BOOT FAILURE…`.
+
+## 8. Bootbare Inhalte für den USB-Test
+Nur **Freeware, Shareware, Public Domain oder Open Source** — offizielle bzw. vom Rechteinhaber autorisierte Spiegel. Jeder Direktlink wurde per HTTP-Abruf geprüft (Status 200, Dateiinhalt). Keine kommerziellen Abandonware-Shops.
+
+| # | Name | Was | Lizenz | Download (geprüft) | Format auf dem Stick | Start im Plan |
+|---|------|-----|--------|--------------------|----------------------|---------------|
+| 1 | **FreeDOS 1.4 LiteUSB** | Freies DOS-System (Installer-/Live-USB-Image) | GPL (FreeDOS-Projekt) | https://download.freedos.org/1.4/FD14-LiteUSB.zip (Seite: https://www.freedos.org/download/) | ZIP → darin `FD14LITE.IMG` auf den Stick legen | **v86** mit Floppy/HDD-Image; ZIP allein startet in js-dos nicht als OS |
+| 2 | **KolibriOS** (Nightly Floppy) | Win95-artiges Asm-OS, passt auf eine Diskette | GPLv2 | https://builds.kolibrios.org/en_US/latest-img.7z (Übersicht: https://kolibrios.org/en/download) | `.7z` entpacken → `kolibri.img` (o. ä.) auf den Stick | **v86** (`fda`/`hda` = IMG); nicht js-dos |
+| 3 | **Doom v1.9 Shareware** | Episode 1 „Knee-Deep in the Dead“ | Shareware (id Software) | https://ftp.gwdg.de/pub/misc/ftp.idsoftware.com/idstuff/doom/doom19s.zip (historischer id-FTP-Spiegel) | `doom19s.zip` unverändert oder entpackt als Ordner | **js-dos**: ZIP laden, `DOOM.EXE` (wie bestehendes `doom1` in `dosGames.ts`) |
+| 4 | **Commander Keen 1** | „Marooned on Mars“, Shareware-Episode | Shareware (id/Apogee; Weitergabe laut Legacy-3D-Realms erlaubt) | https://ftp.funet.fi/pub/msdos/games/apogee/1keen.zip | `1keen.zip` | **js-dos** → `KEEN1.EXE` (entspricht bestehendem Keen-Eintrag) |
+| 5 | **One Must Fall: 2097** (Shareware) | Robot-Kampfspiel, offizielle SW-Episode | Shareware / später Freeware der Vollversion; SW-Paket vom Projektwiki | https://www.omf2097.com/pub/files/omf/omf21sw.zip (Wiki: https://www.omf2097.com/wiki/doku.php?id=download) | `omf21sw.zip` | **js-dos** → `OMF.EXE` / Setup im Archiv |
+| 6 | **Tyrian 2.1 Daten** (Freeware-Basis) | Vertikal-Shooter; Autor gab Tyrian 2000 später als Freeware frei; Datenpaket für OpenTyrian/DOS | Freeware (Jason Emery / Community-Spiegel) | https://camanis.net/tyrian/tyrian21.zip | `tyrian21.zip` | **js-dos** → `TYRIAN.EXE` (ähnlich `tyrian2k` im Repo) |
+| 7 | **Duke Nukem 1 Shareware** | Episode 1 der Apogee-Trilogie | Shareware (3D Realms/Apogee-FTP-Spiegel) | https://ftp.zx.net.nz/pub/mirror/ftp.3drealms.com/share/1duke.zip | `1duke.zip` | **js-dos** → Duke-EXE im Archiv |
+| 8 | **BootChess** (Red Sector Inc.) | Schach im 512-Byte-Bootsector + DOS-.COM | WTFPL v2 (Baudsurfer/RSi) | http://olivier.poudade.free.fr/arc/BootChess.zip | ZIP enthält u. a. `BootChess.img`, `.com`, `.bin` — IMG oder COM auf den Stick | **v86** mit `BootChess.img` **oder** **js-dos** mit `BootChess.com` / `.zip` |
+| 9 | **bootOS** (nanochess) | Minimales Bootsector-OS (512 Byte) | BSD-2-Clause (Oscar Toledo) | https://raw.githubusercontent.com/nanochess/bootOS/master/os.img (Repo: https://github.com/nanochess/bootOS) | `os.img` (512 Byte) | **v86** als Floppy-Image; nicht js-dos |
+
+**Hinweise zur Nutzung:** Stick unter Chromium/HTTPS als First Boot Device wählen (Abschnitt 2/7), Dialog bestätigen, Ordner mit einer der Dateien oben freigeben. Für reine ZIP-Spiele reicht der vorhandene js-dos-Stack; für FreeDOS/Kolibri/bootOS/BootChess-IMG ist v86 (oder ein späterer Image-Pfad) nötig. **MenuetOS** (https://www.menuetos.net/download.htm, Seite erreichbar) wäre thematisch passend (Menuet32 GPL), direkte Binär-URLs waren hier per Abruf nicht stabil verifizierbar (SourceForge 403) — daher nicht in der Tabelle, optional nachziehbar.
+
+## 9. Cooles, aber retro-treu
 Leitplanke: wirkt wie vergessenes OEM-Detail, nicht wie Minispiel-Sammlung.
 
 1. **Welcome-Dialog** nur nach Konami oder geheimen F10+F10 — sonst weg vom Hauptmenü.
@@ -219,5 +256,5 @@ Defaults so wählen, dass **Erstbesucher ohne DEL** denselben Weg wie heute sehe
 2. DEL → BIOS FEATURES → First=Floppy → SAVE → `DISK BOOT FAILURE…` + Piep → Enter → First=HDD-0 → SAVE → Splash/Desktop.
 3. Quick Boot Off → spürbar längerer Memory-Test; Floppy Seek Off → kein Seek-Pause.
 4. IDE Auto Detection → None → Failure; Load Setup Defaults → wieder bootfähig.
-5. First=`USB-HDD` → Zustimmungsdialog → Enter → Directory-Picker (Chromium/HTTPS); Abbruch → `bootfail`. Firefox/Safari-Fallback bzw. „kein USB“-Meldung prüfen; auf iOS kein USB-Punkt.
+5. In BIOS FEATURES First=`USB-HDD` setzen → SAVE → Zustimmungsdialog → Enter → Directory-Picker (Chromium/HTTPS); Abbruch → `bootfail`. Stick mit z. B. `doom19s.zip` → js-dos; mit `BootChess.img` → v86-Pfad oder kontrollierte Ablehnung. Firefox/Safari-Fallback; iOS ohne USB-Punkt.
 6. ScanDisk, EXIT WITHOUT SAVING, Escape-Skip auf normalen Phasen regressen; Escape auf `bootfail` blockiert.
