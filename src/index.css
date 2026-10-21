@@ -1,3 +1,66 @@
+/* Zeiger der Maus-Eigenschaften. CursorHost überschreibt die Werte mit den Win98-Zeigern. */
+:root {
+  --cur-default: default;
+  --cur-help: help;
+  --cur-progress: progress;
+  --cur-wait: wait;
+  --cur-crosshair: crosshair;
+  --cur-text: text;
+  --cur-not-allowed: not-allowed;
+  --cur-ns-resize: ns-resize;
+  --cur-ew-resize: ew-resize;
+  --cur-nwse-resize: nwse-resize;
+  --cur-nesw-resize: nesw-resize;
+  --cur-move: move;
+  --cur-pointer: pointer;
+}
+
+html,
+body {
+  cursor: var(--cur-default);
+}
+
+/* react95 setzt an Knöpfen, Reitern und Listen eigene Zeiger. Win98 zeigt dort den normalen Pfeil. */
+:where(button, select, label, summary, [role='button'], [role='tab'], [role='menuitem'], [role='option'], [role='listbox'], [role='treeitem'], input[type='checkbox'], input[type='radio'], input[type='range'], input[type='color'], input[type='file']) {
+  cursor: var(--cur-default) !important;
+}
+
+:where(button:disabled, [aria-disabled='true']) {
+  cursor: var(--cur-default) !important;
+}
+
+:where(input:not([type]), input[type='text'], input[type='number'], input[type='password'], input[type='email'], input[type='search'], input[type='url'], textarea, [contenteditable='true']) {
+  cursor: var(--cur-text) !important;
+}
+
+:where(input:read-only, textarea:read-only) {
+  cursor: var(--cur-default) !important;
+}
+
+:where(a[href]) {
+  cursor: var(--cur-pointer) !important;
+}
+
+.window-loading {
+  cursor: var(--cur-progress) !important;
+}
+
+.pointer-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pointer-trail img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  image-rendering: pixelated;
+}
+
 .shell {
   height: 100%;
   background: #000;
@@ -45,7 +108,7 @@
   padding: 0;
   border: 0;
   background: none;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .power-btn:focus-visible {
@@ -101,7 +164,7 @@
 }
 
 .power-btn:disabled {
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .power-btn:disabled .pb-halo {
@@ -324,7 +387,7 @@
   background: #aaaaaa;
   color: #000;
   box-shadow: 0.5em 0.5em 0 #000;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .dos-button.is-focused {
@@ -334,7 +397,7 @@
 
 .dos-button.is-disabled {
   color: #555555;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .dos-hotkey {
@@ -398,7 +461,7 @@
   border: 0;
   font: inherit;
   padding: 0 6px;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .setup-item.is-selected {
@@ -443,7 +506,7 @@
   box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #fff;
   font: inherit;
   padding: 2px 22px;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .splash {
@@ -578,7 +641,7 @@
   border: 1px solid transparent;
   background: transparent;
   color: #fff;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
   touch-action: none;
   user-select: none;
 }
@@ -703,7 +766,7 @@
   background: transparent;
   font: inherit;
   padding: 0;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
   display: flex;
   align-items: center;
 }
@@ -761,7 +824,7 @@
 
 .wa button {
   font: inherit;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .wa-window {
@@ -780,7 +843,7 @@
   gap: 3px;
   height: 14px;
   margin: 0 -4px;
-  cursor: move;
+  cursor: var(--cur-move, move) !important;
   touch-action: none;
 }
 
@@ -1486,7 +1549,7 @@
   border: 1px solid transparent;
   background: transparent;
   font: inherit;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .menu-bar-item:hover {
@@ -1603,7 +1666,7 @@
   border-color: #fff #808080 #808080 #fff;
   box-sizing: border-box;
   font: 700 12px/1 Tahoma, Verdana, sans-serif;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
   touch-action: manipulation;
 }
 
@@ -1683,7 +1746,7 @@
 .sol-slot.is-stock {
   display: grid;
   place-items: center;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .sol-recycle {
@@ -1704,7 +1767,7 @@
   border-radius: 4px;
   font-family: Arial, Helvetica, sans-serif;
   transition: left 0.16s ease-out, top 0.16s ease-out;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .sol-card.is-dragging {
@@ -1965,7 +2028,7 @@
 .browser-netscape button {
   font: inherit;
   color: inherit;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .browser-netscape .browser-dropdown {
@@ -2219,7 +2282,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .ns-combo-list:not(:hover) li.is-current,
@@ -2321,7 +2384,7 @@
   font: inherit;
   text-decoration: underline;
   padding: 0;
-  cursor: pointer !important;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .ns-status {
@@ -2403,7 +2466,7 @@
   background: transparent;
   font: inherit;
   text-align: center;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .folder-item span {
@@ -2484,7 +2547,7 @@
   background: transparent;
   font: inherit;
   color: #000;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .tool-button svg {
@@ -2877,7 +2940,7 @@
   font: inherit;
   text-align: left;
   padding: 0;
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .start-root {
@@ -2985,7 +3048,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  cursor: move;
+  cursor: var(--cur-move, move) !important;
   user-select: none;
   touch-action: none;
 }
@@ -3161,7 +3224,7 @@
 }
 
 .app-window.is-maximized .app-window-header {
-  cursor: default;
+  cursor: var(--cur-default, default) !important;
 }
 
 .resize-handle {
@@ -3175,7 +3238,7 @@
   left: 8px;
   right: 8px;
   height: 6px;
-  cursor: ns-resize;
+  cursor: var(--cur-ns-resize, ns-resize) !important;
 }
 
 .resize-n {
@@ -3191,7 +3254,7 @@
   top: 8px;
   bottom: 8px;
   width: 6px;
-  cursor: ew-resize;
+  cursor: var(--cur-ew-resize, ew-resize) !important;
 }
 
 .resize-e {
@@ -3213,19 +3276,19 @@
 .resize-ne {
   top: -2px;
   right: -2px;
-  cursor: nesw-resize;
+  cursor: var(--cur-nesw-resize, nesw-resize) !important;
 }
 
 .resize-sw {
   bottom: -2px;
   left: -2px;
-  cursor: nesw-resize;
+  cursor: var(--cur-nesw-resize, nesw-resize) !important;
 }
 
 .resize-nw {
   top: -2px;
   left: -2px;
-  cursor: nwse-resize;
+  cursor: var(--cur-nwse-resize, nwse-resize) !important;
 }
 
 .resize-se {
@@ -3233,7 +3296,7 @@
   right: -2px;
   width: 16px;
   height: 16px;
-  cursor: nwse-resize;
+  cursor: var(--cur-nwse-resize, nwse-resize) !important;
 }
 
 .app-window > span[data-testid="resizeHandle"] {
@@ -3527,7 +3590,7 @@
   padding: 2px;
   border: 1px dotted transparent;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .look-preview.is-selected {
@@ -3635,7 +3698,7 @@
 .standby {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: 100000;
   background: #000;
   cursor: none;
 }
@@ -3754,7 +3817,7 @@
   background: transparent;
   font: inherit;
   text-decoration: underline;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
   padding: 2px;
   appearance: none;
   -webkit-appearance: none;
@@ -3873,7 +3936,7 @@
   color: #0000ee;
   font: inherit;
   text-decoration: underline;
-  cursor: pointer;
+  cursor: var(--cur-pointer, pointer) !important;
 }
 
 .form-note {

@@ -11,6 +11,8 @@ import {
 import { BiosSetup } from './boot/BiosSetup';
 import { BootScreen } from './boot/BootScreen';
 import { DosMode } from './boot/DosMode';
+import { CursorHost } from './cursors/CursorHost';
+import { PointerTrail } from './cursors/PointerTrail';
 import { PowerScreen } from './boot/PowerScreen';
 import { ScanDisk } from './boot/ScanDisk';
 import { ShutdownScreen } from './boot/ShutdownScreen';
@@ -136,6 +138,8 @@ export default function App() {
   return (
     <ThemeProvider theme={themes[look]}>
       <GlobalStyles />
+      <CursorHost />
+      <PointerTrail />
       <div className="shell">
         {phase === 'power' ? (
           <PowerScreen
