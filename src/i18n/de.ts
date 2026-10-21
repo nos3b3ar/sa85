@@ -242,6 +242,8 @@ export const de = {
     zoneFallback: 'Mitteleuropäische Zeit',
     zoneOption: '(GMT+01:00) Amsterdam, Berlin, Bern, Rom, Stockholm, Wien',
     autoDst: 'Uhr automatisch auf Sommer-/Winterzeit umstellen',
+    dstTitle: 'Neue Einstellungen',
+    dstText: 'Die Uhr wurde sommerzeitbedingt umgestellt. Prüfen Sie, ob die Einstellungen der Uhr richtig sind.',
   },
   volume: {
     title: 'Lautstärkeregelung',

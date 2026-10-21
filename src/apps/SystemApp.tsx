@@ -1,50 +1,52 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Frame, GroupBox, Monitor, Tab, TabBody, Tabs, TreeView, type TreeLeaf } from 'react95';
 import { machine } from '../boot/bootScript';
 import { profile } from '../content/profile';
 import { updateSettings, useSettings, type Look } from '../settings/settings';
 import { lookInfo } from '../styles/themes';
+import { useT, type Messages } from '../i18n';
 import { DialogFooter } from './DialogFooter';
 import { LookPicker } from './shared/LookPicker';
 import type { AppProps } from './types';
 
 const ramMb = (machine.totalMemoryK / 1024).toFixed(1).replace('.', ',');
 
-const devices: TreeLeaf<string>[] = [
-  {
-    id: 'computer',
-    label: 'Computer',
-    items: [
-      group('Anschlüsse (COM und LPT)', ['Kommunikationsanschluss (COM1)', 'Kommunikationsanschluss (COM2)', 'Druckeranschluss (LPT1)']),
-      group('Audio-, Video- und Gamecontroller', ['Creative SB Live! (EMU10K1)', 'Creative Gameport-Joystick']),
-      group('CD-ROM', ['CD-ROM-Laufwerk (Sekundär Master)', 'CD-ROM-Laufwerk (Sekundär Slave)']),
-      group('Diskettenlaufwerk-Controller', ['Standard-Diskettenlaufwerk-Controller']),
-      group('Festplattencontroller', [
-        'Intel 82371AB/EB PCI Bus Master IDE Controller',
-        'Primärer IDE-Controller (Dual FIFO)',
-        'Sekundärer IDE-Controller (Dual FIFO)',
-      ]),
-      group('Grafikkarten', ['NVIDIA GeForce4 MX 440']),
-      group('Laufwerke', ['GENERIC NEC FLOPPY DISK', machine.hddModel]),
-      group('Maus', ['PS/2-kompatible Maus']),
-      group('Monitore', ['Plug & Play-Monitor']),
-      group('Systemkomponenten', [
-        'Intel 82443BX Pentium(r) II Processor to PCI Bridge',
-        'Intel 82371AB/EB PCI to ISA Bridge',
-        'Systemzeitgeber',
-        'Numerischer Coprozessor',
-      ]),
-      group('Tastatur', ['Standardtastatur (101/102 Tasten)']),
-      group('USB-Controller', ['Intel 82371AB/EB PCI to USB Universal Host Controller', 'USB-Root-Hub']),
-    ],
-  },
-];
+function buildDevices(t: Messages): TreeLeaf<string>[] {
+  const { groups, devices } = t.system;
+  return [
+    {
+      id: 'computer',
+      label: 'Computer',
+      items: [
+        group('ports', groups.ports, [devices.com(1), devices.com(2), devices.lpt]),
+        group('media', groups.media, ['Creative SB Live! (EMU10K1)', 'Creative Gameport-Joystick']),
+        group('cdrom', groups.cdrom, [devices.cdMaster, devices.cdSlave]),
+        group('floppy', groups.floppy, [devices.floppy]),
+        group('hdd', groups.hdd, ['Intel 82371AB/EB PCI Bus Master IDE Controller', devices.ide1, devices.ide2]),
+        group('display', groups.display, ['NVIDIA GeForce4 MX 440']),
+        group('drives', groups.drives, ['GENERIC NEC FLOPPY DISK', machine.hddModel]),
+        group('mouse', groups.mouse, [devices.mouse]),
+        group('monitors', groups.monitors, [devices.monitor]),
+        group('system', groups.system, [
+          'Intel 82443BX Pentium(r) II Processor to PCI Bridge',
+          'Intel 82371AB/EB PCI to ISA Bridge',
+          devices.timer,
+          devices.fpu,
+        ]),
+        group('keyboard', groups.keyboard, [devices.keyboard]),
+        group('usb', groups.usb, ['Intel 82371AB/EB PCI to USB Universal Host Controller', 'USB-Root-Hub']),
+      ],
+    },
+  ];
+}
 
-function group(label: string, items: string[]): TreeLeaf<string> {
-  return { id: label, label, items: items.map((item) => ({ id: `${label}/${item}`, label: item })) };
+function group(id: string, label: string, items: string[]): TreeLeaf<string> {
+  return { id, label, items: items.map((item, index) => ({ id: `${id}/${index}`, label: item })) };
 }
 
 export function SystemApp({ onClose }: AppProps) {
+  const t = useT();
+  const devices = useMemo(() => buildDevices(t), [t]);
   const settings = useSettings();
   const [tab, setTab] = useState(0);
   const [note, setNote] = useState<string | null>(null);
@@ -55,11 +57,11 @@ export function SystemApp({ onClose }: AppProps) {
   return (
     <div className="props-dialog">
       <Tabs value={tab} onChange={(value) => setTab(value as number)}>
-        <Tab value={0}>Allgemein</Tab>
-        <Tab value={1}>Geräte-Manager</Tab>
-        <Tab value={2}>Hardwareprofile</Tab>
-        <Tab value={3}>Leistungsmerkmale</Tab>
-        <Tab value={4}>Version ändern</Tab>
+        {t.system.tabs.map((label, index) => (
+          <Tab key={label} value={index}>
+            {label}
+          </Tab>
+        ))}
       </Tabs>
       <TabBody className="props-body">
         {tab === 0 ? (
@@ -70,18 +72,18 @@ export function SystemApp({ onClose }: AppProps) {
               </div>
             </Monitor>
             <div className="system-facts">
-              <p>System:</p>
+              <p>{t.system.system}</p>
               <p className="indent">{info.name}</p>
               {info.edition ? <p className="indent">{info.edition}</p> : null}
               <p className="indent">{info.build}</p>
-              <p>Registriert für:</p>
+              <p>{t.system.registeredTo}</p>
               <p className="indent">{profile.name}</p>
               <p className="indent">sa85.de</p>
               <p className="indent">23009-OEM-0085085-85085</p>
-              <p className="spaced">Computer:</p>
+              <p className="spaced">{t.system.computer}</p>
               <p className="indent">GenuineIntel</p>
-              <p className="indent">Pentium(r) II-Prozessor, {machine.clock}</p>
-              <p className="indent">{ramMb} MB RAM</p>
+              <p className="indent">{t.system.processor(machine.clock)}</p>
+              <p className="indent">{t.system.ram(ramMb)}</p>
             </div>
           </div>
         ) : null}
@@ -94,39 +96,37 @@ export function SystemApp({ onClose }: AppProps) {
         ) : null}
         {tab === 2 ? (
           <div className="stack">
-            <p>
-              Hardwareprofile ermöglichen das Auswählen unterschiedlicher Hardwarekonfigurationen beim Starten.
-            </p>
+            <p>{t.system.profilesText}</p>
             <Frame variant="field" className="profile-list">
-              <span className="is-selected">Originalkonfiguration</span>
+              <span className="is-selected">{t.system.originalConfig}</span>
             </Frame>
             <div className="button-row">
-              <Button disabled>Kopieren</Button>
-              <Button disabled>Umbenennen</Button>
-              <Button disabled>Löschen</Button>
+              <Button disabled>{t.system.copy}</Button>
+              <Button disabled>{t.system.rename}</Button>
+              <Button disabled>{t.system.delete}</Button>
             </div>
           </div>
         ) : null}
         {tab === 3 ? (
           <div className="stack">
-            <GroupBox label="Leistungsmerkmale">
+            <GroupBox label={t.system.performance}>
               <dl className="facts">
-                <dt>Arbeitsspeicher:</dt><dd>{ramMb} MB RAM</dd>
-                <dt>Systemressourcen:</dt><dd>85% frei</dd>
-                <dt>Dateisystem:</dt><dd>32 Bit</dd>
-                <dt>Virtueller Speicher:</dt><dd>32 Bit</dd>
-                <dt>Datenträgerkomprimierung:</dt><dd>Nicht installiert</dd>
-                <dt>PC-Karten (PCMCIA):</dt><dd>Keine PC-Kartensockel installiert</dd>
+                <dt>{t.system.memory}</dt><dd>{t.system.ram(ramMb)}</dd>
+                <dt>{t.system.resources}</dt><dd>{t.system.resourcesValue}</dd>
+                <dt>{t.system.fileSystem}</dt><dd>{t.system.bits}</dd>
+                <dt>{t.system.virtualMemory}</dt><dd>{t.system.bits}</dd>
+                <dt>{t.system.compression}</dt><dd>{t.system.notInstalled}</dd>
+                <dt>{t.system.pcCards}</dt><dd>{t.system.noPcCards}</dd>
               </dl>
-              <p>Ihr System ist optimal konfiguriert.</p>
+              <p>{t.system.optimal}</p>
             </GroupBox>
-            <GroupBox label="Weitere Einstellungen">
+            <GroupBox label={t.system.advanced}>
               <div className="button-row">
-                {['Dateisystem...', 'Grafik...', 'Virtueller Arbeitsspeicher...'].map((label) => (
+                {t.system.advancedButtons.map((label) => (
                   <Button key={label} onClick={() => setNote(label.replace('...', ''))}>{label}</Button>
                 ))}
               </div>
-              {note ? <p className="muted">{note}: Die Einstellungen sind bereits optimal gewählt.</p> : null}
+              {note ? <p className="muted">{t.system.advancedNote(note)}</p> : null}
             </GroupBox>
           </div>
         ) : null}
