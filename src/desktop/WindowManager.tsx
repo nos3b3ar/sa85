@@ -76,7 +76,7 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
         {
           id: `${appId}-${z}`,
           appId,
-          title: app.title,
+          title: app.windowTitle ?? app.title,
           x,
           y,
           width,

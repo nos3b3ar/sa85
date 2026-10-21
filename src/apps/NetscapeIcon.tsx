@@ -3,6 +3,10 @@ type NetscapeIconProps = {
   className?: string;
 };
 
+export function NetscapeWindowIcon({ className }: NetscapeIconProps) {
+  return <img src="/img/netscape/window.png" width={16} height={16} alt="" className={className} draggable={false} />;
+}
+
 export function NetscapeIcon({ variant = '32x32_4', className }: NetscapeIconProps) {
   const size = variant === '16x16_4' ? 16 : 32;
   return (

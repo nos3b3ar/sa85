@@ -24,7 +24,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
   const sizing = useRef<{ edge: Edge; px: number; py: number; start: WindowRect } | null>(null);
 
   if (!app || app.kind !== 'window') return null;
-  const Icon = app.icon;
+  const Icon = app.windowIcon ?? app.icon;
   const Body = app.component;
   const skinned = app.chrome === 'skinned';
   const fixedSize = skinned || app.sizing === 'content';

@@ -14,7 +14,7 @@ import { Unmute } from '@react95/icons/Unmute';
 import { User } from '@react95/icons/User';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { profile } from '../content/profile';
-import { NetscapeIcon } from './NetscapeIcon';
+import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
 import { WinampIcon } from './WinampIcon';
 import type { AppProps } from './types';
@@ -30,6 +30,9 @@ type AppBase = {
   showOnDesktop?: boolean;
   showInStartMenu?: boolean;
   startMenuGroup?: 'games';
+  /** Titelleiste und Taskleiste, falls abweichend vom Startmenü. */
+  windowTitle?: string;
+  windowIcon?: DesktopIconComponent;
 };
 
 type WindowApp = AppBase & {
@@ -111,11 +114,13 @@ export const desktopApps: DesktopApp[] = [
   {
     id: 'netscape',
     title: 'Netscape Navigator',
+    windowTitle: 'Version 4.85 [en]-sa85 - Netscape',
     icon: NetscapeIcon,
+    windowIcon: NetscapeWindowIcon,
     showOnDesktop: false,
     kind: 'window',
     component: lazyNamed(() => import('./BrowserApp'), 'NetscapeApp'),
-    defaultSize: { width: 800, height: 560 },
+    defaultSize: { width: 880, height: 640 },
   },
   {
     id: 'winamp',
@@ -216,7 +221,7 @@ export const desktopApps: DesktopApp[] = [
     showInStartMenu: false,
     kind: 'window',
     component: lazyNamed(() => import('./DisplayApp'), 'DisplayApp'),
-    defaultSize: { width: 420, height: 640 },
+    defaultSize: { width: 540, height: 720 },
   },
   {
     id: 'system',

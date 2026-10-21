@@ -90,7 +90,7 @@ export function Taskbar({
         <div className="task-list">
           {windows.map((win) => {
             const app = getApp(win.appId);
-            const Icon = app?.icon;
+            const Icon = app?.windowIcon ?? app?.icon;
             return (
               <Button
                 key={win.id}

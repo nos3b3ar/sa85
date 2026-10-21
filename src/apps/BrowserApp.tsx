@@ -1,106 +1,33 @@
 import { Ie } from '@react95/icons/Ie';
-import { useEffect, useRef, useState } from 'react';
 import { Button, Frame, MenuList, MenuListItem, Separator, TextInput } from 'react95';
-import { bookmarks, homePages, resolveAddress, type WebPage } from '../content/web';
-import { connect, disconnect, isOnline, useOnline } from './browser/connection';
+import { bookmarks, homePages } from '../content/web';
+import { connect } from './browser/connection';
 import { DialupDialog } from './browser/DialupDialog';
-import { NetscapeIcon } from './NetscapeIcon';
+import { NetscapeView } from './browser/NetscapeView';
+import { useBrowser } from './browser/useBrowser';
 import type { AppProps } from './types';
 
-type Flavor = 'ie' | 'netscape';
-
-const labels = {
-  ie: {
-    menus: ['Datei', 'Bearbeiten', 'Ansicht', 'Favoriten', 'Extras', '?'],
-    bookmarkMenu: 'Favoriten',
-    back: 'Zurück',
-    forward: 'Vorwärts',
-    stop: 'Abbrechen',
-    reload: 'Aktualisieren',
-    home: 'Startseite',
-    address: 'Adresse',
-    go: 'Wechseln zu',
-    product: 'Microsoft Internet Explorer',
-  },
-  netscape: {
-    menus: ['Datei', 'Bearbeiten', 'Ansicht', 'Gehe', 'Communicator', 'Lesezeichen', 'Hilfe'],
-    bookmarkMenu: 'Lesezeichen',
-    back: 'Zurück',
-    forward: 'Vor',
-    stop: 'Stopp',
-    reload: 'Neu laden',
-    home: 'Anfang',
-    address: 'Adresse:',
-    go: 'Los',
-    product: 'Netscape Navigator',
-  },
+const ieLabels = {
+  menus: ['Datei', 'Bearbeiten', 'Ansicht', 'Favoriten', 'Extras', '?'],
+  bookmarkMenu: 'Favoriten',
+  back: 'Zurück',
+  forward: 'Vorwärts',
+  stop: 'Abbrechen',
+  reload: 'Aktualisieren',
+  home: 'Startseite',
+  address: 'Adresse',
+  go: 'Wechseln zu',
+  product: 'Microsoft Internet Explorer',
 };
 
-type BrowserProps = {
-  flavor: Flavor;
-  openApp: (appId: string) => void;
-};
-
-function BrowserApp({ flavor, openApp }: BrowserProps) {
-  const text = labels[flavor];
-  const home = homePages[flavor];
-  const [history, setHistory] = useState<WebPage[]>([home]);
-  const [index, setIndex] = useState(0);
-  const [address, setAddress] = useState(home.url);
-  const [loading, setLoading] = useState(true);
-  const [stopped, setStopped] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState(() => !isOnline());
-  const menuRef = useRef<HTMLDivElement>(null);
-  const online = useOnline();
-  const wasOnline = useRef(online);
-
-  const page = history[index];
-
-  useEffect(() => {
-    setAddress(page.url);
-    setLoading(true);
-    setStopped(false);
-    if (!isOnline()) setPrompt(true);
-  }, [page, reloadKey]);
-
-  useEffect(() => {
-    if (online) setPrompt(false);
-    if (online && !wasOnline.current) {
-      setLoading(true);
-      setStopped(false);
-    }
-    wasOnline.current = online;
-  }, [online]);
-
-  useEffect(() => {
-    if (!openMenu) return;
-    const close = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpenMenu(null);
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [openMenu]);
-
-  const navigate = (next: WebPage) => {
-    setOpenMenu(null);
-    setHistory((prev) => [...prev.slice(0, index + 1), next]);
-    setIndex((value) => value + 1);
-  };
-
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const next = resolveAddress(address);
-    if (next) navigate(next);
-  };
-
-  const goOffline = () => {
-    disconnect();
-    setPrompt(false);
-    setOpenMenu(null);
-    setLoading(false);
-  };
+export function InternetExplorerApp({ openApp }: AppProps) {
+  const text = ieLabels;
+  const browser = useBrowser(homePages.ie);
+  const {
+    home, index, setIndex, address, setAddress, loading, stopped, reloadKey,
+    openMenu, setOpenMenu, prompt, setPrompt, menuRef, online, page,
+    navigate, submit, goOffline, stop, reload, loaded,
+  } = browser;
 
   const status = !online
     ? 'Offline'
@@ -111,7 +38,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
         : 'Fertig';
 
   return (
-    <div className={`browser browser-${flavor}`}>
+    <div className="browser browser-ie">
       <div className="browser-menubar" ref={menuRef}>
         {text.menus.map((menu) => (
           <div key={menu} className="browser-menu-root">
@@ -130,7 +57,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
                       {bookmark.title}
                     </MenuListItem>
                   ))
-                ) : menu === '?' || menu === 'Hilfe' ? (
+                ) : menu === '?' ? (
                   <MenuListItem size="sm" onClick={() => navigate(home)}>
                     Info über {text.product}
                   </MenuListItem>
@@ -148,9 +75,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
                 ) : (
                   <>
                     <MenuListItem size="sm" onClick={() => navigate(home)}>{text.home}</MenuListItem>
-                    <MenuListItem size="sm" onClick={() => setReloadKey((value) => value + 1)}>
-                      {text.reload}
-                    </MenuListItem>
+                    <MenuListItem size="sm" onClick={reload}>{text.reload}</MenuListItem>
                   </>
                 )}
               </MenuList>
@@ -158,7 +83,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
           </div>
         ))}
         <span className={loading && !stopped ? 'browser-throbber is-busy' : 'browser-throbber'} aria-hidden>
-          {flavor === 'ie' ? <Ie variant="32x32_4" /> : <NetscapeIcon />}
+          <Ie variant="32x32_4" />
         </span>
       </div>
       <div className="browser-toolbar">
@@ -172,24 +97,15 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
         >
           {text.forward} ►
         </Button>
-        <Button
-          variant="thin"
-          disabled={!loading || stopped}
-          onClick={() => {
-            setStopped(true);
-            setLoading(false);
-          }}
-        >
-          {text.stop}
-        </Button>
-        <Button variant="thin" onClick={() => setReloadKey((value) => value + 1)}>{text.reload}</Button>
+        <Button variant="thin" disabled={!loading || stopped} onClick={stop}>{text.stop}</Button>
+        <Button variant="thin" onClick={reload}>{text.reload}</Button>
         <Button variant="thin" onClick={() => navigate(home)}>{text.home}</Button>
       </div>
       <Separator />
       <form className="browser-address" onSubmit={submit}>
-        <label htmlFor={`address-${flavor}`}>{text.address}</label>
+        <label htmlFor="address-ie">{text.address}</label>
         <TextInput
-          id={`address-${flavor}`}
+          id="address-ie"
           value={address}
           onChange={(event) => setAddress(event.target.value)}
           fullWidth
@@ -204,7 +120,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
             src={page.src}
             referrerPolicy="no-referrer"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            onLoad={() => setLoading(false)}
+            onLoad={loaded}
           />
         ) : (
           <div className="browser-offline">
@@ -228,10 +144,7 @@ function BrowserApp({ flavor, openApp }: BrowserProps) {
   );
 }
 
-export function InternetExplorerApp({ openApp }: AppProps) {
-  return <BrowserApp flavor="ie" openApp={openApp} />;
-}
-
-export function NetscapeApp({ openApp }: AppProps) {
-  return <BrowserApp flavor="netscape" openApp={openApp} />;
+export function NetscapeApp({ onClose, openApp }: AppProps) {
+  const browser = useBrowser(homePages.netscape);
+  return <NetscapeView browser={browser} onClose={onClose} openApp={openApp} />;
 }

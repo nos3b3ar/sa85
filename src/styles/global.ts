@@ -28,7 +28,7 @@ export const GlobalStyles = createGlobalStyle`
     font-display: block;
   }
 
-  *, *::before, *::after {
+  * {
     box-sizing: border-box;
   }
 
@@ -46,5 +46,9 @@ export const GlobalStyles = createGlobalStyle`
 
   button, input, textarea {
     font-family: inherit;
+  }
+
+  input, textarea {
+    line-height: 1;
   }
 `;

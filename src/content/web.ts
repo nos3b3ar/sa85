@@ -4,6 +4,8 @@ export type WebPage = {
   url: string;
   /** Tatsächlich geladene Quelle (Wayback-Snapshot oder einbettbare Live-Seite). */
   src: string;
+  /** Eingebaute Seite, kein iframe. */
+  builtin?: 'about';
 };
 
 const wayback = (timestamp: string, url: string) => `https://web.archive.org/web/${timestamp}if_/${url}`;
@@ -15,13 +17,21 @@ export const homePages = {
     src: wayback('19981205060735', 'http://microsoft.com/'),
   },
   netscape: {
-    title: 'Netscape Netcenter',
-    url: 'http://home.netscape.com/',
-    src: wayback('19981203074735', 'http://home.netscape.com/'),
+    title: 'Netscape Navigator 4.85',
+    url: 'about:',
+    src: 'about:netscape',
+    builtin: 'about',
   },
 } satisfies Record<string, WebPage>;
 
+export const netscapeNetcenter: WebPage = {
+  title: 'Netscape Netcenter',
+  url: 'http://home.netscape.com/',
+  src: wayback('19981203074735', 'http://home.netscape.com/'),
+};
+
 export const bookmarks: WebPage[] = [
+  netscapeNetcenter,
   { title: 'Google (1998)', url: 'http://www.google.com/', src: wayback('19981111184551', 'http://google.com/') },
   { title: 'Yahoo! (1996)', url: 'http://www.yahoo.com/', src: wayback('19961228024612', 'http://www4.yahoo.com/') },
   { title: 'Apple (1997)', url: 'http://www.apple.com/', src: wayback('19971015112557', 'http://www2.apple.com/') },
@@ -57,6 +67,7 @@ const embeddableHosts = [
 export function resolveAddress(input: string): WebPage | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
+  if (/^about:?$/i.test(trimmed) || trimmed.toLowerCase() === 'about:netscape') return homePages.netscape;
   const known = [homePages.ie, homePages.netscape, ...bookmarks].find(
     (page) => normalize(page.url) === normalize(trimmed),
   );
