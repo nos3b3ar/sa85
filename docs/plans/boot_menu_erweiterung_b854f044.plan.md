@@ -198,7 +198,7 @@ flowchart TD
 ## Neue Einstellungen in `settings.ts`
 ```ts
 cmos: {
-  bootOrder: ['HDD-0', 'CDROM', 'Floppy'],
+  bootOrder: ['HDD-0', 'CDROM', 'Floppy'], // wählbar u. a. USB-HDD, USB-ZIP
   hddPresent: true,
   quickBoot: true,
   floppySeek: true,
