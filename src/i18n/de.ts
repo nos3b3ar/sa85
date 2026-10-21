@@ -318,6 +318,7 @@ export const de = {
     decimal: 'Dezimaltrennzeichen:',
     decimals: 'Anzahl der Dezimalstellen:',
     grouping: 'Symbol für Zifferngruppierung:',
+    space: '(Leerzeichen)',
     groupSize: 'Ziffern pro Gruppe:',
     minus: 'Negatives Vorzeichen:',
     leadingZero: 'Führende Null:',
