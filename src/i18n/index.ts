@@ -1,14 +1,34 @@
+import { useEffect, useSyncExternalStore } from 'react';
 import { getSettings, useSettings, type Locale } from '../settings/settings';
 import { de, type Messages } from './de';
-import { en } from './en';
-import { es } from './es';
-import { fr } from './fr';
-import { ja } from './ja';
-import { th } from './th';
 
 export type { Messages };
 
-export const messages: Record<Locale, Messages> = { de, en, fr, es, ja, th };
+/** Deutsch ist immer im Bundle, alle anderen Sprachen werden erst bei Bedarf geladen. */
+const loaders: Record<Locale, () => Promise<Messages>> = {
+  de: () => Promise.resolve(de),
+  en: () => import('./en').then((module) => module.en),
+  fr: () => import('./fr').then((module) => module.fr),
+  es: () => import('./es').then((module) => module.es),
+  ja: () => import('./ja').then((module) => module.ja),
+  th: () => import('./th').then((module) => module.th),
+};
+
+const loaded: Partial<Record<Locale, Messages>> = { de };
+const listeners = new Set<() => void>();
+
+export async function loadMessages(locale: Locale) {
+  if (loaded[locale]) return;
+  loaded[locale] = await loaders[locale]();
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 /** Format für Zahlen, Datum und Uhrzeit je Sprache. */
 export const localeTags: Record<Locale, string> = {
@@ -31,7 +51,12 @@ export const languageNames: Record<Locale, string> = {
 };
 
 export function useT() {
-  return messages[useSettings().locale];
+  const { locale } = useSettings();
+  const t = useSyncExternalStore(subscribe, () => loaded[locale]);
+  useEffect(() => {
+    void loadMessages(locale);
+  }, [locale]);
+  return t ?? de;
 }
 
 export function useLocaleTag() {
@@ -39,7 +64,7 @@ export function useLocaleTag() {
 }
 
 export function getT() {
-  return messages[getSettings().locale];
+  return loaded[getSettings().locale] ?? de;
 }
 
 /** Übersetzter Titel für Systemfenster, sonst der deutsche Titel aus der Registry. */
