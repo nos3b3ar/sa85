@@ -17,9 +17,10 @@ import { previewScreensaver } from '../screensaver/ScreensaverHost';
 import { SaverCanvas } from '../screensaver/SaverCanvas';
 import { getSettings, updateSettings, type SaverId, type Settings } from '../settings/settings';
 import { DialogFooter } from './DialogFooter';
+import { LookPicker } from './shared/LookPicker';
 import type { AppProps } from './types';
 
-type Draft = Pick<Settings, 'desktopColor' | 'saver' | 'saverWaitSeconds' | 'saverText3d' | 'saverMarqueeText'>;
+type Draft = Pick<Settings, 'desktopColor' | 'saver' | 'saverWaitSeconds' | 'saverText3d' | 'saverMarqueeText' | 'look'>;
 
 const backgrounds = [
   { label: '(Kein)', color: '#008080' },
@@ -37,8 +38,8 @@ const saverOptions = [
 ];
 
 function pickDraft(settings: Settings): Draft {
-  const { desktopColor, saver, saverWaitSeconds, saverText3d, saverMarqueeText } = settings;
-  return { desktopColor, saver, saverWaitSeconds, saverText3d, saverMarqueeText };
+  const { desktopColor, saver, saverWaitSeconds, saverText3d, saverMarqueeText, look } = settings;
+  return { desktopColor, saver, saverWaitSeconds, saverText3d, saverMarqueeText, look };
 }
 
 export function DisplayApp({ onClose }: AppProps) {
@@ -63,6 +64,7 @@ export function DisplayApp({ onClose }: AppProps) {
         <Tab value={0}>Hintergrund</Tab>
         <Tab value={1}>Bildschirmschoner</Tab>
         <Tab value={2}>Einstellungen</Tab>
+        <Tab value={3}>Darstellung</Tab>
       </Tabs>
       <TabBody className="props-body">
         {tab === 0 ? (
@@ -179,6 +181,7 @@ export function DisplayApp({ onClose }: AppProps) {
             </dl>
           </div>
         ) : null}
+        {tab === 3 ? <LookPicker name="display-look" value={draft.look} onChange={(look) => patch({ look })} /> : null}
       </TabBody>
       <DialogFooter
         onOk={() => {

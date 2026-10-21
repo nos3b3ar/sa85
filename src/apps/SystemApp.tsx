@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Button, Frame, GroupBox, Monitor, Tab, TabBody, Tabs, TreeView, type TreeLeaf } from 'react95';
 import { machine } from '../boot/bootScript';
 import { profile } from '../content/profile';
+import { updateSettings, useSettings, type Look } from '../settings/settings';
+import { lookInfo } from '../styles/themes';
 import { DialogFooter } from './DialogFooter';
+import { LookPicker } from './shared/LookPicker';
 import type { AppProps } from './types';
 
 const ramMb = (machine.totalMemoryK / 1024).toFixed(1).replace('.', ',');
@@ -42,8 +45,12 @@ function group(label: string, items: string[]): TreeLeaf<string> {
 }
 
 export function SystemApp({ onClose }: AppProps) {
+  const settings = useSettings();
   const [tab, setTab] = useState(0);
   const [note, setNote] = useState<string | null>(null);
+  const [look, setLook] = useState<Look>(settings.look);
+  const info = lookInfo[settings.look];
+  const apply = () => updateSettings({ look });
 
   return (
     <div className="props-dialog">
@@ -52,6 +59,7 @@ export function SystemApp({ onClose }: AppProps) {
         <Tab value={1}>Geräte-Manager</Tab>
         <Tab value={2}>Hardwareprofile</Tab>
         <Tab value={3}>Leistungsmerkmale</Tab>
+        <Tab value={4}>Version ändern</Tab>
       </Tabs>
       <TabBody className="props-body">
         {tab === 0 ? (
@@ -63,9 +71,9 @@ export function SystemApp({ onClose }: AppProps) {
             </Monitor>
             <div className="system-facts">
               <p>System:</p>
-              <p className="indent">Microsoft Windows 98</p>
-              <p className="indent">Zweite Ausgabe</p>
-              <p className="indent">4.10.2222 A</p>
+              <p className="indent">{info.name}</p>
+              {info.edition ? <p className="indent">{info.edition}</p> : null}
+              <p className="indent">{info.build}</p>
               <p>Registriert für:</p>
               <p className="indent">{profile.name}</p>
               <p className="indent">sa85.de</p>
@@ -122,8 +130,17 @@ export function SystemApp({ onClose }: AppProps) {
             </GroupBox>
           </div>
         ) : null}
+        {tab === 4 ? <LookPicker name="system-look" value={look} onChange={setLook} /> : null}
       </TabBody>
-      <DialogFooter onOk={onClose} onCancel={onClose} />
+      <DialogFooter
+        onOk={() => {
+          apply();
+          onClose();
+        }}
+        onCancel={onClose}
+        onApply={apply}
+        applyDisabled={look === settings.look}
+      />
     </div>
   );
 }

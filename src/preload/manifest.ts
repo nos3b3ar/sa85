@@ -19,8 +19,7 @@ export const preloadManifest: PreloadItem[] = [
   { id: 'skills', type: 'module', load: () => import('../apps/SkillsApp') },
   { id: 'portfolio', type: 'module', load: () => import('../apps/PortfolioApp') },
   { id: 'contact', type: 'module', load: () => import('../apps/ContactApp') },
-  { id: 'computer', type: 'module', load: () => import('../apps/MyComputerApp') },
-  { id: 'recycle', type: 'module', load: () => import('../apps/RecycleBinApp') },
+  { id: 'explorer', type: 'module', load: () => import('../apps/explorer/Explorer') },
   { id: 'browser', type: 'module', load: () => import('../apps/BrowserApp') },
   { id: 'saver-default', type: 'module', load: () => import('../screensaver/savers/pipes') },
 ];

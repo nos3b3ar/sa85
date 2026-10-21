@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useRef } from 'react';
 import { Button, Window, WindowContent, WindowHeader } from 'react95';
-import { getApp } from '../apps/registry';
+import { getApp, type DesktopIconComponent } from '../apps/registry';
 import type { WindowChrome } from '../apps/types';
 import { minWindowSize, useWindows, type ManagedWindow, type WindowRect } from './WindowManager';
 
@@ -19,7 +19,11 @@ const edges: Edge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
 export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }: AppWindowProps) {
   const app = getApp(win.appId);
-  const { openApp, resize, toggleMaximize } = useWindows();
+  const { openApp, resize, toggleMaximize, retitle } = useWindows();
+  const setTitle = useCallback(
+    (title: string, icon?: DesktopIconComponent) => retitle(win.id, title, icon),
+    [retitle, win.id],
+  );
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const sizing = useRef<{ edge: Edge; px: number; py: number; start: WindowRect } | null>(null);
   const closeGuard = useRef<(() => void) | null>(null);
@@ -29,7 +33,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
   const requestClose = () => (closeGuard.current ? closeGuard.current() : onClose());
 
   if (!app || app.kind !== 'window') return null;
-  const Icon = app.windowIcon ?? app.icon;
+  const Icon = win.icon ?? app.windowIcon ?? app.icon;
   const Body = app.component;
   const skinned = app.chrome === 'skinned';
   const fixedSize = skinned || app.sizing === 'content';
@@ -97,6 +101,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
         openApp={openApp}
         chrome={skinned ? { active, dragHandlers, onMinimize, onClose: requestClose } : undefined}
         setCloseGuard={setCloseGuard}
+        setTitle={setTitle}
       />
     </Suspense>
   );

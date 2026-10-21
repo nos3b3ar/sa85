@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSettings } from '../settings/settings';
 import { SplashStage } from '../splash/SplashScreen';
 
 type ShutdownScreenProps = {
@@ -11,6 +12,7 @@ const waitMs = 2800;
 const offMs = 5000;
 
 export function ShutdownScreen({ then, onDone }: ShutdownScreenProps) {
+  const { look } = useSettings();
   const [stage, setStage] = useState<'wait' | 'off'>('wait');
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -44,7 +46,9 @@ export function ShutdownScreen({ then, onDone }: ShutdownScreenProps) {
   return (
     <div className="splash shutdown-wait">
       <SplashStage>
-        <p className="shutdown-wait-text">Windows wird heruntergefahren.</p>
+        <p className="shutdown-wait-text">
+          {look === '95' ? 'Bitte warten Sie, während der Computer heruntergefahren wird.' : 'Windows wird heruntergefahren.'}
+        </p>
       </SplashStage>
     </div>
   );

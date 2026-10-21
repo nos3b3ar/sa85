@@ -13,7 +13,11 @@ export type SaverId =
   | 'maze'
   | 'objects3d';
 
+export type Look = '95' | '98';
+
 export type Settings = {
+  /** Oberfläche im Stil von Windows 95 oder Windows 98. */
+  look: Look;
   volume: number;
   muted: boolean;
   desktopColor: string;
@@ -29,6 +33,7 @@ export type Settings = {
 const storageKey = 'sa85-settings';
 
 export const defaultSettings: Settings = {
+  look: '98',
   volume: 0.8,
   muted: false,
   desktopColor: '#008080',
@@ -62,6 +67,7 @@ function load(): Settings {
     if (!raw) return defaultSettings;
     const stored = JSON.parse(raw) as Partial<Settings>;
     if (stored.saverText3d === 'Andernach85') stored.saverText3d = 'sa85';
+    if (stored.look !== '95' && stored.look !== '98') delete stored.look;
     return { ...defaultSettings, ...stored, iconPositions: readIconPositions(stored.iconPositions) };
   } catch {
     return defaultSettings;

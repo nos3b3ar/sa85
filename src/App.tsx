@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
-import original from 'react95/dist/themes/original';
 import {
   enterBiosSetupSounds,
   fadeOutFan,
@@ -19,7 +18,9 @@ import { SystemSummary } from './boot/SystemSummary';
 import { Desktop } from './desktop/Desktop';
 import { LegalLinks } from './desktop/LegalLinks';
 import { SplashScreen } from './splash/SplashScreen';
+import { useSettings } from './settings/settings';
 import { GlobalStyles } from './styles/global';
+import { themes } from './styles/themes';
 
 type Phase =
   | 'power'
@@ -48,10 +49,11 @@ export default function App() {
   const [afterShutdown, setAfterShutdown] = useState<'off' | 'restart'>('off');
   const jinglePlayed = useRef(false);
   const desktopTimer = useRef(0);
+  const { look } = useSettings();
 
   const playJingle = () => {
     jinglePlayed.current = true;
-    void playStartupSound('win98');
+    void playStartupSound(look === '95' ? 'win95' : 'win98');
   };
 
   const skipToDesktop = () => {
@@ -123,8 +125,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase]);
 
+  useEffect(() => {
+    document.documentElement.dataset.look = look;
+  }, [look]);
+
   return (
-    <ThemeProvider theme={original}>
+    <ThemeProvider theme={themes[look]}>
       <GlobalStyles />
       <div className="shell">
         {phase === 'power' ? (

@@ -89,10 +89,10 @@
 
   var dosMode = new URLSearchParams(location.search).get('mode') === 'dos';
 
-  function dosModeWelcome(games) {
+  function dosModeWelcome(games, version) {
     return [
       '',
-      'Stefan Andernach 85 [Version 4.10.1998]',
+      'Stefan Andernach 85 [Version ' + (version || '4.10.1998') + ']',
       '   (C)Copyright sa85 1985-2026.',
       '',
     ].concat(games.length ? [
@@ -193,7 +193,7 @@
 
   var dosModeStarted = false;
 
-  function bootDosMode(games) {
+  function bootDosMode(games, version) {
     document.getElementById('starting').hidden = false;
     Promise.all(games.map(function (game) {
       return fetch(game.file).then(function (response) {
@@ -210,7 +210,7 @@
       start({
         url: bundle([
           { path: '.jsdos/dosbox.conf', contents: conf(['path %path%;c:\\games', 'type sa85.txt']) },
-          { path: 'SA85.TXT', contents: dosModeWelcome(available) },
+          { path: 'SA85.TXT', contents: dosModeWelcome(available, version) },
         ].concat(tools, available.map(gameBat))),
         initFs: loaded.map(function (item) { return item.bytes; }),
       }, null);
@@ -290,7 +290,7 @@
     if (e.data.action === 'reset') boot();
     if (e.data.action === 'dosmode' && dosMode && !dosModeStarted) {
       dosModeStarted = true;
-      bootDosMode(e.data.games || []);
+      bootDosMode(e.data.games || [], e.data.version);
     }
     if (e.data.action === 'pause' && current && current.setPaused) current.setPaused(!!e.data.value);
   });

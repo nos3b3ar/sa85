@@ -1,4 +1,5 @@
 import type { PointerEventHandler } from 'react';
+import type { DesktopIconComponent } from './registry';
 
 export type WindowChrome = {
   active: boolean;
@@ -17,4 +18,6 @@ export type AppProps = {
   chrome?: WindowChrome;
   /** Ersetzt das Schließen über die Titelleiste, z. B. für eine Rückfrage. onClose schließt weiterhin sofort. */
   setCloseGuard?: (guard: (() => void) | null) => void;
+  /** Ändert Titel und Symbol in Titelleiste und Taskleiste. */
+  setTitle?: (title: string, icon?: DesktopIconComponent) => void;
 };

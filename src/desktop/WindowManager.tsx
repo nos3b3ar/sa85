@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
-import { getApp } from '../apps/registry';
+import { getApp, type DesktopIconComponent } from '../apps/registry';
+import { getSettings } from '../settings/settings';
 
 export type WindowRect = {
   x: number;
@@ -12,6 +13,8 @@ export type ManagedWindow = WindowRect & {
   id: string;
   appId: string;
   title: string;
+  /** Vom Fenster selbst gesetzt, z. B. beim Ordnerwechsel im Explorer. */
+  icon?: DesktopIconComponent;
   z: number;
   minimized: boolean;
   maximized: boolean;
@@ -38,6 +41,7 @@ type WindowManagerValue = {
   toggleMaximize: (id: string) => void;
   toggleTask: (id: string) => void;
   toggleDesktop: () => void;
+  retitle: (id: string, title: string, icon?: DesktopIconComponent) => void;
 };
 
 const WindowManagerContext = createContext<WindowManagerValue | null>(null);
@@ -62,8 +66,9 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((item) => (item.id === existing.id ? { ...item, z, minimized: false } : item));
       }
-      const width = Math.min(app.defaultSize?.width ?? 480, Math.max(280, window.innerWidth - 24));
-      const height = Math.min(app.defaultSize?.height ?? 340, Math.max(180, window.innerHeight - 72));
+      const size = app.lookSize?.[getSettings().look] ?? app.defaultSize;
+      const width = Math.min(size?.width ?? 480, Math.max(280, window.innerWidth - 24));
+      const height = Math.min(size?.height ?? 340, Math.max(180, window.innerHeight - 72));
       const desktopHeight = window.innerHeight - taskbarHeight();
       let x = Math.max(0, Math.round((window.innerWidth - width) / 2));
       let y = Math.max(0, Math.round((desktopHeight - height) / 2));
@@ -152,9 +157,13 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
     setWindows(current.map((item) => (restore.has(item.id) ? { ...item, minimized: false } : item)));
   }, []);
 
+  const retitle = useCallback((id: string, title: string, icon?: DesktopIconComponent) => {
+    setWindows((prev) => prev.map((item) => (item.id === id ? { ...item, title, icon } : item)));
+  }, []);
+
   const value = useMemo(
-    () => ({ windows, openApp, close, focus, minimize, move, resize, toggleMaximize, toggleTask, toggleDesktop }),
-    [windows, openApp, close, focus, minimize, move, resize, toggleMaximize, toggleTask, toggleDesktop],
+    () => ({ windows, openApp, close, focus, minimize, move, resize, toggleMaximize, toggleTask, toggleDesktop, retitle }),
+    [windows, openApp, close, focus, minimize, move, resize, toggleMaximize, toggleTask, toggleDesktop, retitle],
   );
 
   return <WindowManagerContext.Provider value={value}>{children}</WindowManagerContext.Provider>;

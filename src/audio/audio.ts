@@ -1,4 +1,4 @@
-import { effectiveVolume, onSettingsChange } from '../settings/settings';
+import { effectiveVolume, getSettings, onSettingsChange } from '../settings/settings';
 
 let audioContext: AudioContext | null = null;
 
@@ -41,7 +41,7 @@ export function getAudioContext() {
 export function unlockAudio() {
   context();
   void loadFanBuffer();
-  void loadStartupBuffer('win98');
+  void loadStartupBuffer(getSettings().look === '95' ? 'win95' : 'win98');
 }
 
 function loadStartupBuffer(which: StartupTrack) {

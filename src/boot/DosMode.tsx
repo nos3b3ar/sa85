@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { dosGames } from '../content/dosGames';
+import { getSettings } from '../settings/settings';
+import { lookInfo } from '../styles/themes';
 
 type DosMessage = { type: 'sa85-dos'; event: string };
 
@@ -20,7 +22,8 @@ export function DosMode({ onExit }: { onExit: () => void }) {
 
   const sendGames = () => {
     const games = dosGames.map(({ file, dir, exe, command, cycles }) => ({ file, dir, exe, command, cycles }));
-    frameRef.current?.contentWindow?.postMessage({ type: 'sa85-dos', action: 'dosmode', games }, window.location.origin);
+    const version = lookInfo[getSettings().look].dosVersion;
+    frameRef.current?.contentWindow?.postMessage({ type: 'sa85-dos', action: 'dosmode', games, version }, window.location.origin);
   };
 
   return (

@@ -18,6 +18,7 @@ import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
 import { WinampIcon } from './WinampIcon';
+import type { Look } from '../settings/settings';
 import type { AppProps } from './types';
 
 export type IconVariant = '32x32_4' | '16x16_4';
@@ -41,6 +42,8 @@ type WindowApp = AppBase & {
   component: LazyExoticComponent<ComponentType<AppProps>>;
   /** Bei sizing 'content' oder chrome 'skinned' nur Schätzwert fürs Zentrieren. */
   defaultSize?: { width: number; height: number };
+  /** Überschreibt defaultSize für einen Look. */
+  lookSize?: Partial<Record<Look, { width: number; height: number }>>;
   /** 'content': feste Größe nach Inhalt, nicht skalierbar, Maximieren gesperrt. */
   sizing?: 'content';
   /** 'skinned': Die App zeichnet Titelleiste und Rahmen selbst. */
@@ -155,8 +158,8 @@ export const desktopApps: DesktopApp[] = [
     icon: Folder,
     showInStartMenu: false,
     kind: 'window',
-    component: lazyNamed(() => import('./GamesApp'), 'GamesApp'),
-    defaultSize: { width: 320, height: 220 },
+    component: lazyNamed(() => import('./explorer/Explorer'), 'GamesApp'),
+    defaultSize: { width: 560, height: 360 },
   },
   {
     id: 'solitaire',
@@ -184,8 +187,8 @@ export const desktopApps: DesktopApp[] = [
     title: 'Arbeitsplatz',
     icon: Computer,
     kind: 'window',
-    component: lazyNamed(() => import('./MyComputerApp'), 'MyComputerApp'),
-    defaultSize: { width: 440, height: 360 },
+    component: lazyNamed(() => import('./explorer/Explorer'), 'MyComputerApp'),
+    defaultSize: { width: 620, height: 420 },
   },
   {
     id: 'control',
@@ -193,8 +196,9 @@ export const desktopApps: DesktopApp[] = [
     icon: Controls3000,
     showOnDesktop: false,
     kind: 'window',
-    component: lazyNamed(() => import('./ControlPanelApp'), 'ControlPanelApp'),
-    defaultSize: { width: 420, height: 240 },
+    component: lazyNamed(() => import('./explorer/Explorer'), 'ControlPanelApp'),
+    defaultSize: { width: 640, height: 440 },
+    lookSize: { '98': { width: 780, height: 540 } },
   },
   {
     id: 'impressum',
@@ -219,8 +223,8 @@ export const desktopApps: DesktopApp[] = [
     title: 'Papierkorb',
     icon: RecycleEmpty,
     kind: 'window',
-    component: lazyNamed(() => import('./RecycleBinApp'), 'RecycleBinApp'),
-    defaultSize: { width: 340, height: 180 },
+    component: lazyNamed(() => import('./explorer/Explorer'), 'RecycleBinApp'),
+    defaultSize: { width: 520, height: 340 },
   },
   {
     id: 'display',
@@ -240,7 +244,7 @@ export const desktopApps: DesktopApp[] = [
     showInStartMenu: false,
     kind: 'window',
     component: lazyNamed(() => import('./SystemApp'), 'SystemApp'),
-    defaultSize: { width: 520, height: 470 },
+    defaultSize: { width: 680, height: 560 },
   },
   {
     id: 'datetime',

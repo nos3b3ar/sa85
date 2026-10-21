@@ -70,27 +70,32 @@ export function Taskbar({
           </Button>
           {menuOpen ? menu : null}
         </div>
-        <div className="quick-launch">
-          <QuickButton title="Desktop anzeigen" onClick={onShowDesktop}>
-            <DesktopGlyph variant="16x16_4" />
-          </QuickButton>
-          <QuickButton title="Internet Explorer starten" onClick={() => onOpenApp('ie')}>
-            <Ie variant="16x16_4" />
-          </QuickButton>
-          <QuickButton title="Netscape Navigator starten" onClick={() => onOpenApp('netscape')}>
-            <NetscapeIcon variant="16x16_4" />
-          </QuickButton>
-          <QuickButton title="Mail an Stefan schreiben" onClick={() => onOpenApp('contact')}>
-            <Mailnews2 variant="16x16_4" />
-          </QuickButton>
-          <QuickButton title="Winamp starten" onClick={() => onOpenApp('winamp')}>
-            <WinampIcon variant="16x16_4" />
-          </QuickButton>
-        </div>
+        {/* Die Schnellstartleiste kam erst mit Windows 98. */}
+        {settings.look === '98' ? (
+          <div className="quick-launch">
+            <span className="toolbar-grip" aria-hidden />
+            <QuickButton title="Desktop anzeigen" onClick={onShowDesktop}>
+              <DesktopGlyph variant="16x16_4" />
+            </QuickButton>
+            <QuickButton title="Internet Explorer starten" onClick={() => onOpenApp('ie')}>
+              <Ie variant="16x16_4" />
+            </QuickButton>
+            <QuickButton title="Netscape Navigator starten" onClick={() => onOpenApp('netscape')}>
+              <NetscapeIcon variant="16x16_4" />
+            </QuickButton>
+            <QuickButton title="Mail an Stefan schreiben" onClick={() => onOpenApp('contact')}>
+              <Mailnews2 variant="16x16_4" />
+            </QuickButton>
+            <QuickButton title="Winamp starten" onClick={() => onOpenApp('winamp')}>
+              <WinampIcon variant="16x16_4" />
+            </QuickButton>
+          </div>
+        ) : null}
         <div className="task-list">
+          {settings.look === '98' ? <span className="toolbar-grip" aria-hidden /> : null}
           {windows.map((win) => {
             const app = getApp(win.appId);
-            const Icon = app?.windowIcon ?? app?.icon;
+            const Icon = win.icon ?? app?.windowIcon ?? app?.icon;
             return (
               <Button
                 key={win.id}

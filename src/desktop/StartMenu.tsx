@@ -1,8 +1,8 @@
+import { Computer } from '@react95/icons/Computer';
 import { Folder } from '@react95/icons/Folder';
 import { useState } from 'react';
-import { MenuList, MenuListItem } from 'react95';
+import { MenuList, MenuListItem, Separator } from 'react95';
 import { desktopApps, type DesktopApp } from '../apps/registry';
-import { WindowsLogo } from './WindowsLogo';
 
 type StartMenuProps = {
   onOpen: (appId: string) => void;
@@ -16,11 +16,14 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
 
   return (
     <div className="start-menu">
-      <div className="start-banner">Stefan Andernach</div>
-      <MenuList>
+      <div className="start-banner">
+        <b>Stefan</b>
+        <span>Andernach</span>
+      </div>
+      <MenuList className="start-list">
         {visible.filter((app) => !app.startMenuGroup).map((app) => (
           <MenuListItem key={app.id} onClick={() => onOpen(app.id)} onMouseEnter={() => setGamesOpen(false)}>
-            <StartItem app={app} />
+            <StartItem app={app} large />
           </MenuListItem>
         ))}
         {games.length > 0 ? (
@@ -29,8 +32,8 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
             onMouseEnter={() => setGamesOpen(true)}
             onClick={() => setGamesOpen((open) => !open)}
           >
-            <span className="start-item">
-              <Folder variant="16x16_4" />
+            <span className="start-item is-large">
+              <Folder variant="32x32_4" />
               Spiele
               <span className="start-arrow" aria-hidden="true" />
             </span>
@@ -51,9 +54,10 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
             ) : null}
           </MenuListItem>
         ) : null}
-        <MenuListItem className="start-shutdown" onClick={onShutdown} onMouseEnter={() => setGamesOpen(false)}>
-          <span className="start-item">
-            <WindowsLogo />
+        <Separator />
+        <MenuListItem onClick={onShutdown} onMouseEnter={() => setGamesOpen(false)}>
+          <span className="start-item is-large">
+            <Computer variant="32x32_4" />
             Beenden...
           </span>
         </MenuListItem>
@@ -62,11 +66,11 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
   );
 }
 
-function StartItem({ app }: { app: DesktopApp }) {
+function StartItem({ app, large = false }: { app: DesktopApp; large?: boolean }) {
   const Icon = app.icon;
   return (
-    <span className="start-item">
-      <Icon variant="16x16_4" />
+    <span className={large ? 'start-item is-large' : 'start-item'}>
+      <Icon variant={large ? '32x32_4' : '16x16_4'} />
       {app.title}
     </span>
   );

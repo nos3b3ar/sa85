@@ -523,6 +523,17 @@
   image-rendering: pixelated;
 }
 
+[data-look='95'] .splash-bar {
+  background: linear-gradient(90deg, #000080, #1084d0 50%, #000080) 0 0 / 50% 100% repeat-x;
+  animation: splash-bar-95 1.6s linear infinite;
+}
+
+@keyframes splash-bar-95 {
+  to {
+    background-position: 50vw 0;
+  }
+}
+
 @media (orientation: portrait) {
   .splash {
     --splash-width: calc(100vw / 0.6);
@@ -618,6 +629,7 @@
 
 .task-list {
   display: flex;
+  align-items: center;
   gap: 4px;
   min-width: 0;
   flex: 1;
@@ -638,17 +650,33 @@
   max-width: 148px;
 }
 
+/* Windows 98: jede Symbolleiste beginnt mit Trennlinie und Griff. */
 .quick-launch {
   display: flex;
   align-items: center;
   gap: 2px;
   flex: none;
-  padding: 0 6px 0 8px;
-  border-left: 2px groove #fff;
-  border-right: 2px groove #fff;
+  padding: 0 4px;
   height: 26px;
+  box-shadow: inset 1px 0 #808080, inset 2px 0 #fff;
 }
 
+[data-look='98'] .task-list {
+  box-shadow: inset 1px 0 #808080, inset 2px 0 #fff;
+  padding-left: 4px;
+}
+
+.toolbar-grip {
+  flex: none;
+  box-sizing: border-box;
+  width: 3px;
+  height: 22px;
+  margin-right: 3px;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #808080;
+  border-bottom: 1px solid #808080;
+}
 .quick-button {
   width: 24px !important;
   height: 24px !important;
@@ -2397,16 +2425,178 @@
   padding: 6px;
 }
 
+.props-dialog [role='tab'] {
+  white-space: nowrap;
+}
+
 .explorer {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.explorer .folder-view {
+.explorer-body {
   flex: 1;
   min-height: 0;
+  display: flex;
+  container-type: inline-size;
+}
+
+.explorer .folder-view {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: auto;
+}
+
+.explorer-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 3px;
+}
+
+.explorer-toolbar,
+.explorer-address {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 2px 2px 0;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+}
+
+.explorer-toolbar .toolbar-grip,
+.explorer-address .toolbar-grip {
+  align-self: stretch;
+  height: auto;
+  margin: 1px 4px 1px 2px;
+}
+
+.tool-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 56px;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  color: #000;
+  cursor: default;
+}
+
+.tool-button svg {
+  fill: #000;
+}
+
+.tool-button .tool-folder {
+  fill: #ffd84a;
+  stroke: #808000;
+  stroke-width: 1;
+}
+
+.tool-button:not(:disabled):hover {
+  border-color: #fff #808080 #808080 #fff;
+}
+
+.tool-button:not(:disabled):active {
+  border-color: #808080 #fff #fff #808080;
+}
+
+.tool-button:not(:disabled):hover svg {
+  fill: #008000;
+}
+
+.tool-button:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.tool-button:disabled svg,
+.tool-button:disabled .tool-folder {
+  fill: #808080;
+  stroke: none;
+  filter: drop-shadow(1px 1px 0 #fff);
+}
+
+.explorer-address-label {
+  padding: 0 6px 0 2px;
+}
+
+.explorer-address-icon {
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  align-self: stretch;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  border-right: 0;
+}
+
+.explorer-address-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.web-pane {
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 12px;
+  overflow: hidden auto;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  background:
+    radial-gradient(circle at 0 100%, rgba(16, 132, 208, 0.18), transparent 60%),
+    #fff;
+  border: 2px solid;
+  border-color: #808080 transparent #fff #808080;
+  box-shadow: inset 1px 1px 0 #000;
+}
+
+.web-pane + .folder-view {
+  border-left: 0;
+  box-shadow: inset 0 1px 0 #000, inset -1px -1px 0 #dfdfdf;
+}
+
+.web-pane svg {
+  width: 32px;
+  height: 32px;
+}
+
+.web-pane h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.web-pane hr {
+  width: 100%;
+  height: 2px;
+  margin: 0;
+  border: 0;
+  background: linear-gradient(to right, #ff6a00, #ffd200 60%, transparent);
+}
+
+.web-pane p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+@container (max-width: 420px) {
+  .web-pane {
+    display: none;
+  }
+
+  .web-pane + .folder-view {
+    border-left: 2px solid #808080;
+    box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #dfdfdf;
+  }
 }
 
 .status-bar {
@@ -2702,7 +2892,34 @@
   z-index: 5200;
   display: flex;
   align-items: stretch;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.35));
+  padding: 3px;
+  background: #c6c6c6;
+  box-shadow:
+    inset -1px -1px 0 #0a0a0a,
+    inset 1px 1px 0 #dfdfdf,
+    inset -2px -2px 0 #848584,
+    inset 2px 2px 0 #fefefe;
+}
+
+.start-menu > .start-list {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+}
+
+.start-menu > .start-list::before,
+.start-menu > .start-list::after {
+  display: none;
+}
+
+.start-list > li {
+  height: 40px;
+  padding-left: 6px;
+}
+
+.start-list > hr {
+  margin: 2px 0;
 }
 
 .start-banner {
@@ -2711,12 +2928,25 @@
   background: linear-gradient(#000080, #1084d0);
   color: #fff;
   font-weight: 700;
+  font-size: 18px;
   letter-spacing: 1px;
-  padding: 12px 6px;
+  padding: 8px 4px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   align-self: stretch;
+}
+
+.start-banner b {
+  margin-inline-end: 0.3em;
+}
+
+[data-look='95'] .start-banner {
+  background: #808080;
+}
+
+[data-look='95'] .start-banner b {
+  color: #c0c0c0;
 }
 
 .start-item {
@@ -2726,8 +2956,16 @@
   min-width: 180px;
 }
 
-.start-shutdown {
-  margin-top: 2px;
+.start-item.is-large {
+  gap: 10px;
+  min-width: 190px;
+}
+
+.start-item.is-large svg,
+.start-item.is-large img {
+  width: 32px;
+  height: 32px;
+  flex: none;
 }
 
 .start-button-label {
@@ -3270,6 +3508,128 @@
 
 .shutdown-form .shutdown-actions button {
   min-width: 76px;
+}
+
+.look-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.look-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.look-preview {
+  display: block;
+  padding: 2px;
+  border: 1px dotted transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
+.look-preview.is-selected {
+  border-color: #000;
+}
+
+.look-shot {
+  display: flex;
+  flex-direction: column;
+  height: 116px;
+  background: #c0c0c0;
+  box-shadow: inset 1px 1px #808080, inset -1px -1px #fff, inset 2px 2px #0a0a0a, inset -2px -2px #dfdfdf;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.look-shot-title {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  height: 16px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.look-shot.is-95 .look-shot-title {
+  background: #000080;
+}
+
+.look-shot.is-98 .look-shot-title {
+  background: linear-gradient(to right, #000080, #1084d0);
+}
+
+.look-shot-controls {
+  display: flex;
+  gap: 1px;
+}
+
+.look-shot-controls i {
+  width: 12px;
+  height: 11px;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff;
+}
+
+.look-shot-desktop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #008080;
+}
+
+.look-shot-desktop img {
+  image-rendering: pixelated;
+}
+
+.look-shot-name {
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.5px;
+}
+
+.look-shot-taskbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 22px;
+  padding: 2px;
+  box-sizing: border-box;
+  border-top: 1px solid #fff;
+}
+
+.look-shot-start {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 0 4px 0 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080;
+}
+
+.look-shot-quick {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 0 4px;
+  border-left: 1px solid #808080;
+  box-shadow: inset 1px 0 #fff;
+}
+
+.look-shot-quick svg {
+  width: 14px;
+  height: 14px;
 }
 
 .standby {
