@@ -12,7 +12,8 @@ export type WindowRect = {
 export type ManagedWindow = WindowRect & {
   id: string;
   appId: string;
-  title: string;
+  /** Nur gesetzt, wenn das Fenster den Titel selbst ändert. Sonst gilt der übersetzte App-Titel. */
+  title?: string;
   /** Vom Fenster selbst gesetzt, z. B. beim Ordnerwechsel im Explorer. */
   icon?: DesktopIconComponent;
   z: number;
@@ -81,7 +82,6 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
         {
           id: `${appId}-${z}`,
           appId,
-          title: app.windowTitle ?? app.title,
           x,
           y,
           width,

@@ -49,7 +49,7 @@ export default function App() {
   const [afterShutdown, setAfterShutdown] = useState<'off' | 'restart'>('off');
   const jinglePlayed = useRef(false);
   const desktopTimer = useRef(0);
-  const { look } = useSettings();
+  const { look, locale } = useSettings();
 
   const playJingle = () => {
     jinglePlayed.current = true;
@@ -128,6 +128,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.look = look;
   }, [look]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   return (
     <ThemeProvider theme={themes[look]}>

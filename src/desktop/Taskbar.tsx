@@ -11,6 +11,9 @@ import { NetscapeIcon } from '../apps/NetscapeIcon';
 import { WinampIcon } from '../apps/WinampIcon';
 import { VolumeControl } from '../apps/VolumeControl';
 import { disconnect, useOnline } from '../apps/browser/connection';
+import { useLocaleTag, useT, windowTitle } from '../i18n';
+import { queryBattery, useBattery } from '../power/battery';
+import { PowerGlyph } from '../power/PowerGlyph';
 import { useSettings } from '../settings/settings';
 import type { ManagedWindow } from './WindowManager';
 import { WindowsLogo } from './WindowsLogo';
@@ -39,6 +42,10 @@ export function Taskbar({
   const now = useClock();
   const settings = useSettings();
   const online = useOnline();
+  const t = useT();
+  const tag = useLocaleTag();
+  const battery = useBattery();
+  const batteryInfo = battery.status === 'ready' ? battery.info : null;
   const [volumeOpen, setVolumeOpen] = useState(false);
   const [linkMenu, setLinkMenu] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
@@ -55,7 +62,16 @@ export function Taskbar({
     return () => document.removeEventListener('mousedown', close);
   }, [volumeOpen, linkMenu]);
 
+  useEffect(() => {
+    if (settings.showPowerMeter && battery.status === 'idle') void queryBattery();
+  }, [settings.showPowerMeter, battery.status]);
+
   const silent = settings.muted || settings.volume === 0;
+  const powerTitle = !batteryInfo?.present
+    ? t.shell.powerAc
+    : batteryInfo.charging
+      ? t.shell.powerCharging(Math.round(batteryInfo.level * 100))
+      : t.shell.powerBattery(Math.round(batteryInfo.level * 100));
   const SpeakerIcon = silent ? Mute : Unmute;
 
   return (
@@ -65,7 +81,7 @@ export function Taskbar({
           <Button active={menuOpen} onClick={onToggleMenu}>
             <span className="start-button-label">
               <WindowsLogo />
-              Start
+              {t.shell.start}
             </span>
           </Button>
           {menuOpen ? menu : null}
@@ -74,19 +90,19 @@ export function Taskbar({
         {settings.look === '98' ? (
           <div className="quick-launch">
             <span className="toolbar-grip" aria-hidden />
-            <QuickButton title="Desktop anzeigen" onClick={onShowDesktop}>
+            <QuickButton title={t.shell.showDesktop} onClick={onShowDesktop}>
               <DesktopGlyph variant="16x16_4" />
             </QuickButton>
-            <QuickButton title="Internet Explorer starten" onClick={() => onOpenApp('ie')}>
+            <QuickButton title={t.shell.launchIe} onClick={() => onOpenApp('ie')}>
               <Ie variant="16x16_4" />
             </QuickButton>
-            <QuickButton title="Netscape Navigator starten" onClick={() => onOpenApp('netscape')}>
+            <QuickButton title={t.shell.launchNetscape} onClick={() => onOpenApp('netscape')}>
               <NetscapeIcon variant="16x16_4" />
             </QuickButton>
-            <QuickButton title="Mail an Stefan schreiben" onClick={() => onOpenApp('contact')}>
+            <QuickButton title={t.shell.mailStefan} onClick={() => onOpenApp('contact')}>
               <Mailnews2 variant="16x16_4" />
             </QuickButton>
-            <QuickButton title="Winamp starten" onClick={() => onOpenApp('winamp')}>
+            <QuickButton title={t.shell.launchWinamp} onClick={() => onOpenApp('winamp')}>
               <WinampIcon variant="16x16_4" />
             </QuickButton>
           </div>
@@ -105,7 +121,7 @@ export function Taskbar({
               >
                 <span className="task-button-label">
                   {Icon ? <Icon variant="16x16_4" /> : null}
-                  {win.title}
+                  {windowTitle(t, app, win.title)}
                 </span>
               </Button>
             );
@@ -128,7 +144,7 @@ export function Taskbar({
                   setLinkMenu(false);
                 }}
               >
-                Trennen
+                {t.shell.disconnect}
               </MenuListItem>
             </MenuList>
           ) : null}
@@ -137,8 +153,8 @@ export function Taskbar({
               <button
                 type="button"
                 className="tray-icon"
-                title="Verbindung hergestellt"
-                aria-label="Verbindung hergestellt"
+                title={t.shell.connected}
+                aria-label={t.shell.connected}
                 onClick={() => {
                   setVolumeOpen(false);
                   setLinkMenu((open) => !open);
@@ -147,11 +163,26 @@ export function Taskbar({
                 <Rnaui101 variant="16x16_4" />
               </button>
             ) : null}
+            {settings.showPowerMeter ? (
+              <button
+                type="button"
+                className="tray-icon"
+                title={powerTitle}
+                aria-label={powerTitle}
+                onClick={() => {
+                  setVolumeOpen(false);
+                  setLinkMenu(false);
+                  onOpenApp('power');
+                }}
+              >
+                <PowerGlyph info={batteryInfo} />
+              </button>
+            ) : null}
             <button
               type="button"
               className="tray-icon"
-              title={silent ? 'Lautstärke (Ton aus)' : `Lautstärke ${Math.round(settings.volume * 100)}%`}
-              aria-label="Lautstärke"
+              title={silent ? t.shell.volumeMuted : t.shell.volumeLevel(Math.round(settings.volume * 100))}
+              aria-label={t.shell.volume}
               onClick={() => {
                 setLinkMenu(false);
                 setVolumeOpen((open) => !open);
@@ -166,13 +197,13 @@ export function Taskbar({
             <button
               type="button"
               className="tray-clock"
-              title={now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              title={now.toLocaleDateString(tag, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               onClick={() => {
                 setVolumeOpen(false);
                 onOpenApp('datetime');
               }}
             >
-              {now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+              {now.toLocaleTimeString(tag, { hour: '2-digit', minute: '2-digit' })}
             </button>
           </Frame>
         </div>

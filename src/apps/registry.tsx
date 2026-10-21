@@ -57,7 +57,7 @@ type LinkApp = AppBase & {
 
 export type DesktopApp = WindowApp | LinkApp;
 
-function lazyNamed(loader: () => Promise<Record<string, ComponentType<AppProps>>>, name: string) {
+function lazyNamed<K extends string, M extends Record<K, ComponentType<AppProps>>>(loader: () => Promise<M>, name: K) {
   return lazy(() => loader().then((mod) => ({ default: mod[name] })));
 }
 

@@ -2,6 +2,7 @@ import { Suspense, useCallback, useRef } from 'react';
 import { Button, Window, WindowContent, WindowHeader } from 'react95';
 import { getApp, type DesktopIconComponent } from '../apps/registry';
 import type { WindowChrome } from '../apps/types';
+import { useT, windowTitle } from '../i18n';
 import { minWindowSize, useWindows, type ManagedWindow, type WindowRect } from './WindowManager';
 
 type AppWindowProps = {
@@ -20,6 +21,7 @@ const edges: Edge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }: AppWindowProps) {
   const app = getApp(win.appId);
   const { openApp, resize, toggleMaximize, retitle } = useWindows();
+  const t = useT();
   const setTitle = useCallback(
     (title: string, icon?: DesktopIconComponent) => retitle(win.id, title, icon),
     [retitle, win.id],
@@ -95,7 +97,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
   };
 
   const body = (
-    <Suspense fallback={skinned ? null : <p className="window-loading">Lädt...</p>}>
+    <Suspense fallback={skinned ? null : <p className="window-loading">{t.common.loading}</p>}>
       <Body
         onClose={onClose}
         openApp={openApp}
@@ -154,21 +156,22 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
       >
         <span className="app-window-title">
           <Icon variant="16x16_4" />
-          <span>{win.title}</span>
+          <span>{windowTitle(t, app, win.title)}</span>
         </span>
         <span className="app-window-controls">
-          <Button size="sm" onClick={onMinimize} aria-label="Minimieren">
+          <Button size="sm" onClick={onMinimize} aria-label={t.shell.minimize} title={t.shell.minimize}>
             <span className="title-min" />
           </Button>
           <Button
             size="sm"
             disabled={fixedSize}
             onClick={() => toggleMaximize(win.id)}
-            aria-label={maximized ? 'Wiederherstellen' : 'Maximieren'}
+            aria-label={maximized ? t.shell.restore : t.shell.maximize}
+            title={maximized ? t.shell.restore : t.shell.maximize}
           >
             <span className={maximized ? 'title-restore' : 'title-max'} />
           </Button>
-          <Button size="sm" onClick={requestClose} aria-label="Schließen">
+          <Button size="sm" onClick={requestClose} aria-label={t.shell.close} title={t.shell.close}>
             <span className="title-close" />
           </Button>
         </span>

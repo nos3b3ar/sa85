@@ -4,7 +4,6 @@ import { Desk100 } from '@react95/icons/Desk100';
 import { Folder } from '@react95/icons/Folder';
 import { Intl101 } from '@react95/icons/Intl101';
 import { Joy102 } from '@react95/icons/Joy102';
-import { Main100 } from '@react95/icons/Main100';
 import { Network2 } from '@react95/icons/Network2';
 import { PowerOn } from '@react95/icons/PowerOn';
 import { ReaderCd } from '@react95/icons/ReaderCd';
@@ -13,17 +12,17 @@ import { ReaderDisket } from '@react95/icons/ReaderDisket';
 import { RecycleEmpty } from '@react95/icons/RecycleEmpty';
 import { Timedate } from '@react95/icons/Timedate';
 import { Unmute } from '@react95/icons/Unmute';
-import { Wab321019 } from '@react95/icons/Wab321019';
-import type { ComponentType } from 'react';
 import { machine } from '../../boot/bootScript';
+import { appTitle, type Messages } from '../../i18n';
 import { desktopApps, type DesktopIconComponent } from '../registry';
+import { MouseIcon, UsersIcon } from '../systemIcons';
 
 export type FolderId = 'computer' | 'control' | 'games' | 'recycle';
 
 export type FolderItem = {
   id: string;
   label: string;
-  icon: ComponentType<{ variant?: '32x32_4' }>;
+  icon: DesktopIconComponent;
   /** Text in der Web-Ansicht und in der Statusleiste, wenn das Objekt markiert ist. */
   description: string;
   /** Doppelklick öffnet einen Ordner im selben Fenster oder eine App in einem neuen. */
@@ -39,90 +38,71 @@ export type FolderDef = {
   items: () => FolderItem[];
 };
 
-const pick = 'Markieren Sie ein Objekt, um seine Beschreibung anzuzeigen.';
-
-export const folders: Record<FolderId, FolderDef> = {
-  computer: {
-    title: 'Arbeitsplatz',
-    icon: Computer,
-    parent: null,
-    intro: `Zeigt die Laufwerke dieses Computers an. ${pick}`,
-    status: `${machine.cpuType}, ${machine.totalMemoryK}K RAM`,
-    items: () => [
-      { id: 'a', label: '3,5-Diskette (A:)', icon: ReaderDisket, description: `3,5"-Diskette (${machine.driveA})` },
-      { id: 'c', label: '(C:)', icon: ReaderClosed, description: `Lokaler Datenträger, ${machine.hddModel} (${machine.hddSize})` },
-      { id: 'd', label: '(D:)', icon: ReaderCd, description: 'CD-ROM-Laufwerk' },
-      { id: 'e', label: '(E:)', icon: ReaderCd, description: 'CD-ROM-Laufwerk' },
-      {
-        id: 'control',
-        label: 'Systemsteuerung',
-        icon: Controls3000,
-        description: 'Passt die Einstellungen des Computers an.',
-        open: { folder: 'control' },
-      },
-    ],
-  },
-  control: {
-    title: 'Systemsteuerung',
-    icon: Controls3000,
-    parent: 'computer',
-    intro: `Die Einstellungen in der Systemsteuerung ermöglichen die Anpassung des Computers an Ihre persönlichen Vorstellungen. ${pick}`,
-    status: 'Arbeitsplatz',
-    items: () => [
-      {
-        id: 'display',
-        label: 'Anzeige',
-        icon: Desk100,
-        description: 'Passt Hintergrund, Bildschirmschoner und Bildschirmeinstellungen an.',
-        open: { app: 'display' },
-      },
-      { id: 'users', label: 'Benutzer', icon: Wab321019, description: 'Richtet den Computer für mehrere Benutzer ein.' },
-      {
-        id: 'datetime',
-        label: 'Datum/Uhrzeit',
-        icon: Timedate,
-        description: 'Ändert Datum, Uhrzeit und Zeitzone des Computers.',
-        open: { app: 'datetime' },
-      },
-      { id: 'power', label: 'Energieverwaltung', icon: PowerOn, description: 'Konfiguriert die Energiesparfunktionen des Computers.' },
-      { id: 'joystick', label: 'Gamecontroller', icon: Joy102, description: 'Fügt Gamecontroller hinzu, entfernt sie oder ändert ihre Einstellungen.' },
-      { id: 'regional', label: 'Ländereinstellungen', icon: Intl101, description: 'Ändert die Anzeige von Zahlen, Währungen, Uhrzeit und Datum.' },
-      { id: 'mouse', label: 'Maus', icon: Main100, description: 'Passt Doppelklickgeschwindigkeit, Mauszeiger und Bewegung an.' },
-      {
-        id: 'volume',
-        label: 'Multimedia',
-        icon: Unmute,
-        description: 'Ändert die Einstellungen für Audio und Lautstärke.',
-        open: { app: 'volume' },
-      },
-      { id: 'network', label: 'Netzwerk', icon: Network2, description: 'Konfiguriert Netzwerkhardware und -software.' },
-      {
-        id: 'system',
-        label: 'System',
-        icon: Computer,
-        description: 'Zeigt Systeminformationen an und ändert die Darstellung von Windows.',
-        open: { app: 'system' },
-      },
-    ],
-  },
-  games: {
-    title: 'Spiele',
-    icon: Folder,
-    parent: null,
-    intro: `Enthält die Spiele dieses Computers. ${pick}`,
-    status: 'Desktop',
-    items: () => desktopApps
-      .filter((app) => app.startMenuGroup === 'games')
-      .map((app) => ({ id: app.id, label: app.title, icon: app.icon, description: `Startet ${app.title}.`, open: { app: app.id } })),
-  },
-  recycle: {
-    title: 'Papierkorb',
-    icon: RecycleEmpty,
-    parent: null,
-    intro: 'Enthält Dateien und Ordner, die Sie gelöscht haben. Der Papierkorb ist leer.',
-    status: '0 Byte',
-    items: () => [],
-  },
-};
+export function buildFolders(t: Messages): Record<FolderId, FolderDef> {
+  const e = t.explorer;
+  const c = e.control;
+  return {
+    computer: {
+      title: t.apps.computer,
+      icon: Computer,
+      parent: null,
+      intro: `${e.computer.intro} ${e.pick}`,
+      status: `${machine.cpuType}, ${machine.totalMemoryK}K RAM`,
+      items: () => [
+        { id: 'a', label: e.computer.floppy, icon: ReaderDisket, description: e.computer.floppyInfo(machine.driveA) },
+        { id: 'c', label: '(C:)', icon: ReaderClosed, description: e.computer.localDisk(machine.hddModel, machine.hddSize) },
+        { id: 'd', label: '(D:)', icon: ReaderCd, description: e.computer.cdrom },
+        { id: 'e', label: '(E:)', icon: ReaderCd, description: e.computer.cdrom },
+        {
+          id: 'control',
+          label: t.apps.control,
+          icon: Controls3000,
+          description: e.computer.controlInfo,
+          open: { folder: 'control' },
+        },
+      ],
+    },
+    control: {
+      title: t.apps.control,
+      icon: Controls3000,
+      parent: 'computer',
+      intro: `${c.intro} ${e.pick}`,
+      status: t.apps.computer,
+      items: () => [
+        { id: 'display', label: c.display, icon: Desk100, description: c.displayInfo, open: { app: 'display' } },
+        { id: 'users', label: c.users, icon: UsersIcon, description: c.usersInfo, open: { app: 'users' } },
+        { id: 'datetime', label: c.datetime, icon: Timedate, description: c.datetimeInfo, open: { app: 'datetime' } },
+        { id: 'power', label: c.power, icon: PowerOn, description: c.powerInfo, open: { app: 'power' } },
+        { id: 'joystick', label: c.gamepad, icon: Joy102, description: c.gamepadInfo, open: { app: 'gamepad' } },
+        { id: 'regional', label: c.regional, icon: Intl101, description: c.regionalInfo, open: { app: 'regional' } },
+        { id: 'mouse', label: c.mouse, icon: MouseIcon, description: c.mouseInfo, open: { app: 'mouse' } },
+        { id: 'volume', label: c.multimedia, icon: Unmute, description: c.multimediaInfo, open: { app: 'volume' } },
+        { id: 'network', label: c.network, icon: Network2, description: c.networkInfo, open: { app: 'network' } },
+        { id: 'system', label: c.system, icon: Computer, description: c.systemInfo, open: { app: 'system' } },
+      ],
+    },
+    games: {
+      title: t.apps.games,
+      icon: Folder,
+      parent: null,
+      intro: `${e.games.intro} ${e.pick}`,
+      status: e.games.status,
+      items: () => desktopApps
+        .filter((app) => app.startMenuGroup === 'games')
+        .map((app) => {
+          const label = appTitle(t, app);
+          return { id: app.id, label, icon: app.icon, description: e.startsApp(label), open: { app: app.id } };
+        }),
+    },
+    recycle: {
+      title: t.apps.recycle,
+      icon: RecycleEmpty,
+      parent: null,
+      intro: e.recycle.intro,
+      status: '0 Byte',
+      items: () => [],
+    },
+  };
+}
 
 export const addressOrder: FolderId[] = ['computer', 'control', 'games', 'recycle'];
