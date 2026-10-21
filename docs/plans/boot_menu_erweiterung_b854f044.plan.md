@@ -1,6 +1,6 @@
 ---
 name: Boot-Menü-Erweiterung
-overview: Das Award-CMOS-Setup (v4.51PG-Fiktion) wird von einem fast leeren Menü zu einem glaubwürdigen Setup mit echten Unterseiten. Kern ist die Boot-Sequenz (Default = Projekt-Festplatte ST34311A); falsche Reihenfolge oder entfernte Platte blockiert Windows mit Award-Meldung und PC-Speaker-Piep. Dazu Quick Boot, Floppy Seek, NumLock, Passwort, Defaults sowie zurückhaltende Easter Eggs — alles retro, nichts verspielt.
+overview: Das Award-CMOS-Setup (v4.51PG-Fiktion) wird von einem fast leeren Menü zu einem glaubwürdigen Setup mit echten Unterseiten. Kern ist die Boot-Sequenz (Default = Projekt-Festplatte ST34311A); falsche Reihenfolge oder entfernte Platte blockiert Windows mit Award-Meldung und PC-Speaker-Piep. Dazu USB-HDD/USB-ZIP inkl. lesendem Directory-Picker, Quick Boot, Floppy Seek, NumLock, Passwort, Defaults sowie zurückhaltende Easter Eggs — alles retro, nichts verspielt.
 todos:
   - id: setup-shell
     content: BiosSetup-Unterseiten-Framework (Enter öffnet, ESC zurück, gelbe Auswahl, Item-Help-Zeile, Save-Confirm-Dialoge)
@@ -10,6 +10,9 @@ todos:
     status: pending
   - id: boot-fail
     content: bootfail-Phase bei nicht bootfähiger Reihenfolge/entferntem HDD; Award-Text DISK BOOT FAILURE… plus playDiskBootFailureBeep
+    status: pending
+  - id: usb-boot
+    content: USB-HDD/USB-ZIP in Boot Sequence; BIOS-Zustimmungsdialog dann showDirectoryPicker mode read; Fallback Firefox/Safari/iOS
     status: pending
   - id: post-hooks
     content: BootScreen an CMOS koppeln (Quick Boot kürzt Memory-Test, Floppy Seek hörbar/animiert, Setup-Prompt ein/aus)
@@ -63,6 +66,7 @@ Wir **wechseln nicht** zu AMI/Phoenix-UI — nur Optionen und Verhaltensdetails 
 3. Bei Fehlboot: Award-Meldung + PC-Speaker-Fehlerton.
 4. CMOS-Schalter wirken spürbar auf den **POST** (Quick Boot, Floppy Seek, Prompt).
 5. Zurückhaltende Easter Eggs — retro, nicht verspielt.
+6. **USB-Boot** in der Boot Sequence (Award-typisch), mit Browser-Zustimmung und nur lesendem Dateizugriff.
 
 ---
 
@@ -81,7 +85,7 @@ Zweispaltige Feldliste (Award-Stil), Werte per `+/-` oder PgUp/PgDn:
 | **Virus Warning** | Disabled | Enabled: beim nächsten „Boot“ einmalig Award-Warntext `! WARNING ! Disk boot sector is to be modified…` (nur kosmetisch / Pause mit Y/N) |
 | **CPU Internal/External Cache** | Enabled | Anzeige; Disabled → kurzer Hinweis im Summary „Cache Disabled“ |
 | **Quick Power On Self Test** | Enabled | **Koppelt an POST:** Enabled kürzt `memoryDurationMs` und IDE-Delays in [src/boot/BootScreen.tsx](src/boot/BootScreen.tsx); Disabled = heutiges langsames Hochzählen |
-| **First / Second / Third Boot Device** | HDD-0 / CDROM / Floppy | Steuert Boot-Erfolg (Abschnitt 3) |
+| **First / Second / Third Boot Device** | HDD-0 / CDROM / Floppy | Steuert Boot-Erfolg (Abschnitt 3); zusätzlich Award-Werte `USB-HDD` / `USB-ZIP` (Abschnitt 8) |
 | **Boot Up Floppy Seek** | Enabled | Enabled: kurzes Floppy-Seek-Geräusch (`tone` oder bestehendes Seek-Feeling) + 200–400 ms Pause nach Memory-Test; Disabled = überspringen (wie Phoenix „Floppy check“) |
 | **Boot Up NumLock Status** | On | Merkt `cmos.numLock`; optional Taskleisten-/Desktop-Hinweis oder nur CMOS-Echo (Browser kann echte NumLock selten setzen) |
 | **Gate A20 Option** | Fast | Rein kosmetisch |
@@ -95,6 +99,7 @@ Zweispaltige Feldliste (Award-Stil), Werte per `+/-` oder PgUp/PgDn:
 
 Blockiert Windows:
 - First = Floppy oder CDROM (Simulation: Laufwerke immer leer / kein System).
+- First = `USB-HDD` / `USB-ZIP` ohne erfolgreichen lesenden Picker (Abschnitt 7) → ebenfalls Failure.
 - Sequenz ohne HDD-0 / First = Disabled.
 - `hddPresent: false` (IDE Auto Detection „None“ oder HDD aus Priority entfernt).
 
@@ -142,7 +147,27 @@ Neu / schärfen:
 | `MICROSOFT SCANDISK` | Unverändert |
 | `SAVE & EXIT` / `EXIT WITHOUT SAVING` | Confirm; Save wertet Boot-Order aus |
 
-## 7. Cooles, aber retro-treu
+## 7. USB-Boot (`USB-HDD` / `USB-ZIP`)
+Award-Boards der späten 90er/frühen 2000er listeten in der Boot Sequence oft **USB-HDD** und **USB-ZIP** neben Floppy/HDD/CDROM. Diese Werte kommen in First/Second/Third Boot Device dazu (Default bleibt HDD-0; USB nicht vorausgewählt).
+
+### Ablauf in der Web-App
+1. Nutzer setzt z. B. First Boot Device = `USB-HDD` (oder `USB-ZIP`) und speichert mit SAVE & EXIT.
+2. Beim „Boot von USB“ erscheint ein **BIOS-artiger Zustimmungsdialog** (blaues Setup-Fenster, VGA-Font): sinngemäß, ob der Zugriff auf den USB-Stick erlaubt wird. Bestätigung per Klick auf OK oder Enter; Abbruch = Esc / Nein.
+3. **Erst nach Bestätigung** ruft die App `window.showDirectoryPicker({ mode: 'read' })` auf (File System Access API). Nur Lesen — kein `readwrite`, keine Schreibversuche auf den Stick.
+4. Erfolgreicher Picker: Verzeichnisinhalt nur lesen (Dateiliste / „bootfähige“ Dateien prüfen oder als Gimmick anzeigen). Ob daraus ein echter Alternativ-Boot (z. B. Mini-DOS) folgt, bleibt optional; Minimum ist glaubwürdige Erkennung + Weiterboot oder kontrollierter Failure.
+5. Picker abgebrochen oder leer → Verhalten wie **kein bootfähiges Gerät** (Phase `bootfail`, Abschnitt 3).
+
+### Technische Fakten (Browser)
+- Ein Browser kann das **physikalische Einstecken** eines Sticks nicht erkennen. Das „Einstecken“ ist daher eine **simulierte Aktion** bzw. der Bestätigungsdialog selbst (die Nutzergeste).
+- `showDirectoryPicker` braucht eine **aktive Nutzergeste** — Klick/Enter im Dialog liefert sie; Aufruf ohne Geste scheitert.
+- API nur über **HTTPS** und in **Chromium-Desktop** (Chrome, Edge, Opera). Nicht in Firefox/Safari in gleicher Form.
+- **Fallback Firefox/Safari:** `input type="file"` mit `webkitdirectory` (nur lesend, einmalige Auswahl) **oder** originalgetreue Meldung, dass kein USB-Gerät gefunden wurde → `bootfail`.
+- **iPhone/iPad:** USB-Boot irrelevant — Menüpunkt ausblenden oder kurz als „N/A“ führen, keinen Picker anbieten.
+- **WebUSB ist keine Option:** Chrome sperrt Massenspeicher-Klassen; Stick-Dateisystem darüber nicht nutzbar.
+
+Technik-Hinweis: kleine Hilfsfunktion z. B. in `src/boot/usbBoot.ts` (Feature-Detect `showDirectoryPicker`, Dialog-Komponente im Setup-/BIOS-Look, Fallback-Input versteckt). Anbindung in [src/App.tsx](src/App.tsx) beim Auswerten der Boot-Order nach SAVE & EXIT / POST.
+
+## 8. Cooles, aber retro-treu
 Leitplanke: wirkt wie vergessenes OEM-Detail, nicht wie Minispiel-Sammlung.
 
 1. **Welcome-Dialog** nur nach Konami oder geheimen F10+F10 — sonst weg vom Hauptmenü.
@@ -194,4 +219,5 @@ Defaults so wählen, dass **Erstbesucher ohne DEL** denselben Weg wie heute sehe
 2. DEL → BIOS FEATURES → First=Floppy → SAVE → `DISK BOOT FAILURE…` + Piep → Enter → First=HDD-0 → SAVE → Splash/Desktop.
 3. Quick Boot Off → spürbar längerer Memory-Test; Floppy Seek Off → kein Seek-Pause.
 4. IDE Auto Detection → None → Failure; Load Setup Defaults → wieder bootfähig.
-5. ScanDisk, EXIT WITHOUT SAVING, Escape-Skip auf normalen Phasen regressen; Escape auf `bootfail` blockiert.
+5. First=`USB-HDD` → Zustimmungsdialog → Enter → Directory-Picker (Chromium/HTTPS); Abbruch → `bootfail`. Firefox/Safari-Fallback bzw. „kein USB“-Meldung prüfen; auf iOS kein USB-Punkt.
+6. ScanDisk, EXIT WITHOUT SAVING, Escape-Skip auf normalen Phasen regressen; Escape auf `bootfail` blockiert.
