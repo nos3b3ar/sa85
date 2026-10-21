@@ -49,13 +49,13 @@ export const impressum: LegalDocument = {
         {
           type: 'p',
           parts: [
-            'Diese Seite ist ein privates Fanprojekt. Es besteht keine geschäftliche Verbindung zu Microsoft, Netscape, Winamp oder dem ENERGY-STAR-Programm.',
+            'Diese Seite ist ein privates Fanprojekt. Es besteht keine geschäftliche Verbindung zu Microsoft, Netscape, Winamp, dem ENERGY-STAR-Programm oder den Herstellern der Spiele im Fenster „MS DOS“.',
           ],
         },
         {
           type: 'p',
           parts: [
-            'Windows, das Windows-Logo, Internet Explorer und MS Sans Serif sind Marken der Microsoft Corporation. Netscape, Winamp und ENERGY STAR sind Marken ihrer jeweiligen Inhaber.',
+            'Windows, das Windows-Logo, MS-DOS, Internet Explorer und MS Sans Serif sind Marken der Microsoft Corporation. Netscape, Winamp, ENERGY STAR, Commander Keen, Doom, Apogee, One Must Fall und Tyrian sind Marken ihrer jeweiligen Inhaber.',
           ],
         },
       ],
@@ -76,6 +76,22 @@ export const impressum: LegalDocument = {
         {
           type: 'p',
           parts: ['Die Fenster und Symbole stammen aus der Bibliothek react95.'],
+        },
+        {
+          type: 'p',
+          parts: [
+            'Das Fenster „MS DOS“ nutzt den Emulator js-dos von Alexander Guryanov mit DOSBox. Beide stehen unter der GNU General Public License, Version 2. Der Quellcode steht unter ',
+            { label: 'github.com/caiiiycuk/js-dos', href: 'https://github.com/caiiiycuk/js-dos' },
+            ', der Lizenztext unter ',
+            { label: 'gnu.org/licenses/old-licenses/gpl-2.0', href: 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.html' },
+            '. Laden Sie über „Programm öffnen...“ nur Dateien, an denen Sie die Rechte haben, etwa Freeware, Shareware oder eigene Kopien.',
+          ],
+        },
+        {
+          type: 'p',
+          parts: [
+            'Im Menü „Spiele“ und im MS-DOS-Modus unter C:\\GAMES liegen die unveränderten Originaldateien von Spielen, deren Rechteinhaber die kostenlose Weitergabe erlaubt haben: Commander Keen 1 „Marooned on Mars“ (Shareware-Episode, © 1990 id Software, vertrieben von Apogee Software), Doom (Shareware-Episode, © 1993 id Software), One Must Fall: 2097 (© 1994 Diversions Entertainment, seit 1999 Freeware) und Tyrian 2000 (© 1999 Eclipse Software, seit 2004 Freeware). Alle Rechte bleiben bei den jeweiligen Inhabern. Die mitgelieferten Lizenz- und Hinweisdateien liegen jeweils im Spielordner.',
+          ],
         },
         {
           type: 'p',
@@ -143,6 +159,12 @@ export const datenschutz: LegalDocument = {
           type: 'p',
           parts: [
             'Im lokalen Speicher des Browsers liegen Einträge, die Sie selbst auslösen. Unter „sa85-settings“ stehen Lautstärke, Stummschaltung, Desktopfarbe, Anordnung der Symbole, Bildschirmschoner und, wenn Sie es im Einwahl-Dialog ankreuzen, die Erlaubnis, den Retro-Browser künftig ohne neue Nachfrage zu verbinden. Unter „sa85-dst-…“ steht, dass der Hinweis zur Zeitumstellung schon angezeigt wurde.',
+          ],
+        },
+        {
+          type: 'p',
+          parts: [
+            'Der DOS-Emulator im Fenster „MS DOS“ läuft vollständig in Ihrem Browser. Dateien, die Sie dort öffnen oder anlegen, werden nicht hochgeladen. Der Emulator legt Startdateien und geöffnete Programme im Dateisystem des Browsers (Origin Private File System, Ordner „jsdos“) und Anzeigeeinstellungen im lokalen Speicher unter Schlüsseln ab, die mit „jsdos“ beginnen. Diese Daten verlassen Ihr Gerät nicht. Sie löschen sie über „Cache leeren“ im Fenster oder über die Rückfrage beim Schließen.',
           ],
         },
         {

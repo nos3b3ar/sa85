@@ -153,12 +153,9 @@ export function startBootSounds({ withPowerButton }: { withPowerButton: boolean 
     playFromStart(biosStartupSound);
     bootTimers.push(window.setTimeout(() => void startFan(), fanStartMs));
   };
-  if (withPowerButton) {
-    playFromStart(powerButtonSound);
-    bootTimers.push(window.setTimeout(startBios, powerButtonMs));
-  } else {
-    startBios();
-  }
+  // Die Schwarzphase vor dem POST ist bei jedem Start gleich lang; der BIOS-Ton wartet daher auch ohne Powerknopf.
+  if (withPowerButton) playFromStart(powerButtonSound);
+  bootTimers.push(window.setTimeout(startBios, powerButtonMs));
 }
 
 export function enterBiosSetupSounds() {

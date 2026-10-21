@@ -4,13 +4,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-jsdos.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/copy-jsdos.mjs",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
     "@react95/icons": "^2.6.0",
+    "js-dos": "^8.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react95": "^4.0.0",

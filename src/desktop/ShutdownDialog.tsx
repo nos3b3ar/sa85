@@ -1,12 +1,26 @@
-import { Button, Window, WindowContent, WindowHeader } from 'react95';
+import { Computer } from '@react95/icons/Computer';
+import { useState } from 'react';
+import { Button, Radio, Window, WindowContent, WindowHeader } from 'react95';
+
+export type ShutdownChoice = 'standby' | 'shutdown' | 'restart' | 'dos';
 
 type ShutdownDialogProps = {
-  onShutdown: () => void;
-  onRestart: () => void;
+  onChoose: (choice: ShutdownChoice) => void;
   onCancel: () => void;
 };
 
-export function ShutdownDialog({ onShutdown, onRestart, onCancel }: ShutdownDialogProps) {
+const choices: { id: ShutdownChoice; label: string; help: string }[] = [
+  { id: 'standby', label: 'Standby', help: 'Schaltet den Bildschirm ab. Ein Klick oder Tastendruck weckt den Computer wieder auf.' },
+  { id: 'shutdown', label: 'Herunterfahren', help: 'Beendet Windows und schaltet den Computer aus.' },
+  { id: 'restart', label: 'Neu starten', help: 'Beendet Windows und startet den Computer neu.' },
+  { id: 'dos', label: 'Im MS-DOS-Modus neu starten', help: 'Startet MS-DOS im Vollbild ohne Windows. Mit EXIT kehren Sie zu Windows zurück.' },
+];
+
+export function ShutdownDialog({ onChoose, onCancel }: ShutdownDialogProps) {
+  const [choice, setChoice] = useState<ShutdownChoice>('shutdown');
+  const [helpOpen, setHelpOpen] = useState(false);
+  const help = choices.find((item) => item.id === choice)?.help;
+
   return (
     <div className="shutdown-anchor">
       <Window className="shutdown-window">
@@ -17,14 +31,34 @@ export function ShutdownDialog({ onShutdown, onRestart, onCancel }: ShutdownDial
           </Button>
         </WindowHeader>
         <WindowContent>
-          <div className="message-body">
-            <p>Möchten Sie den Computer jetzt herunterfahren?</p>
-          </div>
-          <div className="shutdown-actions">
-            <Button onClick={onShutdown}>Herunterfahren</Button>
-            <Button onClick={onRestart}>Neu starten</Button>
-            <Button onClick={onCancel}>Abbrechen</Button>
-          </div>
+          <form
+            className="shutdown-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onChoose(choice);
+            }}
+          >
+            <Computer variant="32x32_4" width={32} height={32} className="shutdown-icon" />
+            <fieldset className="shutdown-choices">
+              <legend>Was soll der Computer jetzt tun?</legend>
+              {choices.map((item) => (
+                <Radio
+                  key={item.id}
+                  name="shutdown-choice"
+                  value={item.id}
+                  label={item.label}
+                  checked={choice === item.id}
+                  onChange={() => setChoice(item.id)}
+                />
+              ))}
+            </fieldset>
+            {helpOpen ? <p className="shutdown-help">{help}</p> : null}
+            <div className="shutdown-actions">
+              <Button type="submit" primary>OK</Button>
+              <Button type="button" onClick={onCancel}>Abbrechen</Button>
+              <Button type="button" active={helpOpen} onClick={() => setHelpOpen((open) => !open)}>Hilfe</Button>
+            </div>
+          </form>
         </WindowContent>
       </Window>
     </div>

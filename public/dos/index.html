@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>MS DOS</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/js-dos/js-dos.css">
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  #dos { position: absolute; inset: 0; }
+  #drop {
+    display: none; position: absolute; inset: 0; z-index: 10;
+    align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .75); color: #c0c0c0;
+    font: 16px/1.4 "Courier New", monospace; border: 2px dashed #c0c0c0;
+  }
+  body.is-dragging #drop { display: flex; }
+  #starting {
+    position: absolute; top: 16px; left: 16px; z-index: 5;
+    color: #c0c0c0; font: 16px/1.2 "Courier New", monospace;
+  }
+  #starting[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div id="dos"></div>
+<div id="starting" hidden>MS-DOS wird gestartet...</div>
+<div id="drop">Datei loslassen, um sie in MS DOS zu laden</div>
+<script src="/js-dos/js-dos.js"></script>
+<script>
+(function () {
+  var container = document.getElementById('dos');
+  var current = null;
+  var objectUrl = null;
+
+  function notify(event, detail) {
+    if (window.parent !== window) {
+      window.parent.postMessage(Object.assign({ type: 'sa85-dos', event: event }, detail), location.origin);
+    }
+  }
+
+  var skip = /^(setup|install|instal|config|setsound|uninst|readme)/i;
+
+  function zipEntries(bytes) {
+    var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    var end = -1;
+    for (var i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+      if (view.getUint32(i, true) === 0x06054b50) { end = i; break; }
+    }
+    if (end < 0) return null;
+    var count = view.getUint16(end + 10, true);
+    var offset = view.getUint32(end + 16, true);
+    var names = [];
+    var decoder = new TextDecoder('latin1');
+    for (var n = 0; n < count && offset + 46 <= bytes.length; n++) {
+      if (view.getUint32(offset, true) !== 0x02014b50) break;
+      var nameLength = view.getUint16(offset + 28, true);
+      var extraLength = view.getUint16(offset + 30, true);
+      var commentLength = view.getUint16(offset + 32, true);
+      names.push(decoder.decode(bytes.subarray(offset + 46, offset + 46 + nameLength)));
+      offset += 46 + nameLength + extraLength + commentLength;
+    }
+    return names;
+  }
+
+  function gameConf(names) {
+    var programs = names.filter(function (path) {
+      var file = path.split('/').pop();
+      return /\.(exe|com|bat)$/i.test(file) && !skip.test(file);
+    });
+    var shallowest = Math.min.apply(null, programs.map(function (path) { return path.split('/').length; }));
+    var top = programs.filter(function (path) { return path.split('/').length === shallowest; });
+    var lines = [];
+    if (top.length === 1) {
+      var parts = top[0].split('/');
+      var file = parts.pop();
+      if (parts.length) lines.push('cd \\' + parts.join('\\'));
+      lines.push(file);
+    } else {
+      lines.push('dir /w');
+    }
+    return conf(lines);
+  }
+
+  function conf(lines, cycles) {
+    var base = cycles ? baseConf.replace('cycles=auto', 'cycles=fixed ' + cycles) : baseConf;
+    return base + '\n[autoexec]\n' + ['@echo off', 'mount c .', 'c:', 'set dircmd=/p', 'path %path%;c:\\sa85', 'cls'].concat(lines).join('\n') + '\n';
+  }
+
+  var dosMode = new URLSearchParams(location.search).get('mode') === 'dos';
+
+  function dosModeWelcome(games) {
+    return [
+      '',
+      'Stefan Andernach 85 [Version 4.10.1998]',
+      '   (C)Copyright sa85 1985-2026.',
+      '',
+    ].concat(games.length ? [
+      'Spiele in C:\\GAMES, zum Starten den Namen eintippen:',
+      '  ' + games.map(function (game) { return game.command; }).join('   '),
+      '',
+    ] : []).concat([
+      'Geben Sie EXIT ein, um Windows neu zu starten.',
+      '',
+      '',
+    ]).join('\r\n');
+  }
+
+  var welcome = [
+    '',
+    'sa85 DOS-Box - DOSBox im Browser (js-dos)',
+    '',
+    'Spiele starten:',
+    '  "Programm oeffnen..." oben im Fenster waehlt eine .zip- oder',
+    '  .jsdos-Datei aus. Sie koennen die Datei auch ins Fenster ziehen.',
+    '  Enthaelt sie genau ein Programm, startet es von selbst.',
+    '  Sonst mit DIR suchen und den Namen eintippen.',
+    '',
+    'Befehle zum Ausprobieren:  DIR   VER   MEM   CLS   HELP',
+    '',
+    'DOS kann nicht zurueckscrollen. DIR haelt nach jeder Seite an,',
+    'MODE50 zeigt 50 Zeilen statt 25, MODE25 schaltet zurueck.',
+    '',
+    '',
+  ].join('\r\n');
+
+  var crcTable = [];
+  for (var c = 0; c < 256; c++) {
+    var k = c;
+    for (var b = 0; b < 8; b++) k = k & 1 ? 0xedb88320 ^ (k >>> 1) : k >>> 1;
+    crcTable[c] = k >>> 0;
+  }
+
+  function crc32(data) {
+    var crc = 0xffffffff;
+    for (var i = 0; i < data.length; i++) crc = crcTable[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  // Uncompressed zip; js-dos only boots bundles that carry .jsdos/dosbox.conf.
+  function bundle(files) {
+    var encoder = new TextEncoder();
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+    files.forEach(function (file) {
+      var name = encoder.encode(file.path);
+      var data = typeof file.contents === 'string' ? encoder.encode(file.contents) : file.contents;
+      var crc = crc32(data);
+      var local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 10, true);
+      local.setUint32(14, crc, true);
+      local.setUint32(18, data.length, true);
+      local.setUint32(22, data.length, true);
+      local.setUint16(26, name.length, true);
+      var entry = new DataView(new ArrayBuffer(46));
+      entry.setUint32(0, 0x02014b50, true);
+      entry.setUint16(4, 10, true);
+      entry.setUint16(6, 10, true);
+      entry.setUint32(16, crc, true);
+      entry.setUint32(20, data.length, true);
+      entry.setUint32(24, data.length, true);
+      entry.setUint16(28, name.length, true);
+      entry.setUint32(42, offset, true);
+      chunks.push(local.buffer, name, data);
+      central.push(entry.buffer, name);
+      offset += 30 + name.length + data.length;
+    });
+    var size = central.reduce(function (sum, part) { return sum + part.byteLength; }, 0);
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);
+    end.setUint16(8, files.length, true);
+    end.setUint16(10, files.length, true);
+    end.setUint32(12, size, true);
+    end.setUint32(16, offset, true);
+    return URL.createObjectURL(new Blob(chunks.concat(central, [end.buffer])));
+  }
+
+  // Real-mode stubs: INT 10h AX=1112h loads the 8x8 font (80x50), AX=0003h restores 80x25.
+  var tools = [
+    { path: 'SA85/MODE50.COM', contents: new Uint8Array([0xb8, 0x12, 0x11, 0xb3, 0x00, 0xcd, 0x10, 0xc3]) },
+    { path: 'SA85/MODE25.COM', contents: new Uint8Array([0xb8, 0x03, 0x00, 0xcd, 0x10, 0xc3]) },
+  ];
+
+  function gameBat(game) {
+    var lines = ['@echo off'];
+    if (game.cycles) lines.push('config -set cpu cycles=fixed ' + game.cycles);
+    lines.push('cd \\GAMES\\' + game.dir, game.exe, 'cd \\');
+    if (game.cycles) lines.push('config -set cpu cycles=auto');
+    return { path: 'GAMES/' + game.command + '.BAT', contents: lines.join('\r\n') + '\r\n' };
+  }
+
+  var dosModeStarted = false;
+
+  function bootDosMode(games) {
+    document.getElementById('starting').hidden = false;
+    Promise.all(games.map(function (game) {
+      return fetch(game.file).then(function (response) {
+        if (!response.ok) throw new Error(response.status);
+        return response.arrayBuffer();
+      }).then(function (buffer) {
+        return { game: game, bytes: new Uint8Array(buffer) };
+      }).catch(function () {
+        return null;
+      });
+    })).then(function (results) {
+      var loaded = results.filter(Boolean);
+      var available = loaded.map(function (item) { return item.game; });
+      start({
+        url: bundle([
+          { path: '.jsdos/dosbox.conf', contents: conf(['path %path%;c:\\games', 'type sa85.txt']) },
+          { path: 'SA85.TXT', contents: dosModeWelcome(available) },
+        ].concat(tools, available.map(gameBat))),
+        initFs: loaded.map(function (item) { return item.bytes; }),
+      }, null);
+      document.getElementById('starting').hidden = true;
+    });
+  }
+
+  function boot() {
+    if (dosMode) return;
+    start({
+      url: bundle([
+        { path: '.jsdos/dosbox.conf', contents: conf(['type sa85.txt']) },
+        { path: 'SA85.TXT', contents: welcome },
+      ].concat(tools)),
+    }, null);
+  }
+
+  var baseConf = [
+    '[sdl]', 'autolock=false', 'usescancodes=true',
+    '[dosbox]', 'machine=svga_s3', 'memsize=16',
+    '[cpu]', 'core=auto', 'cputype=auto', 'cycles=auto',
+    '[render]', 'aspect=false', 'scaler=none',
+    '[sblaster]', 'sbtype=sb16', 'sbbase=220', 'irq=7', 'dma=1', 'hdma=5', 'oplmode=auto',
+    '[dos]', 'xms=true', 'ems=true', 'umb=true',
+  ].join('\n');
+
+  function start(source, name) {
+    var previous = current;
+    current = null;
+    Promise.resolve(previous && previous.stop()).catch(function () {}).then(function () {
+      container.innerHTML = '';
+      if (objectUrl && objectUrl !== source.url) URL.revokeObjectURL(objectUrl);
+      objectUrl = source.url || null;
+      current = Dos(container, {
+        url: source.url,
+        initFs: source.initFs,
+        pathPrefix: '/js-dos/emulators/',
+        backend: 'dosbox',
+        backendLocked: true,
+        kiosk: true,
+        noCloud: true,
+        autoStart: true,
+        countDownStart: 0,
+        autoSave: false,
+        imageRendering: 'pixelated',
+        renderAspect: '4/3',
+        mouseCapture: false,
+      });
+      if (current && current.setNoCloud) current.setNoCloud(true);
+      notify('started', { name: name });
+    });
+  }
+
+  function load(file, run, cycles) {
+    if (!file) return;
+    if (!/\.(zip|jsdos)$/i.test(file.name)) {
+      notify('rejected', { name: file.name });
+      return;
+    }
+    file.arrayBuffer().then(function (buffer) {
+      var bytes = new Uint8Array(buffer);
+      var names = zipEntries(bytes);
+      if (!names) {
+        notify('rejected', { name: file.name });
+      } else if (names.indexOf('.jsdos/dosbox.conf') !== -1) {
+        start({ url: URL.createObjectURL(file) }, file.name);
+      } else {
+        var dosboxConf = run ? conf(run, cycles) : gameConf(names);
+        start({ url: bundle([{ path: '.jsdos/dosbox.conf', contents: dosboxConf }].concat(tools)), initFs: bytes }, file.name);
+      }
+    });
+  }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'sa85-dos') return;
+    if (e.data.action === 'load' && e.data.file) load(e.data.file, e.data.run, e.data.cycles);
+    if (e.data.action === 'reset') boot();
+    if (e.data.action === 'dosmode' && dosMode && !dosModeStarted) {
+      dosModeStarted = true;
+      bootDosMode(e.data.games || []);
+    }
+    if (e.data.action === 'pause' && current && current.setPaused) current.setPaused(!!e.data.value);
+  });
+
+  var depth = 0;
+  function hasFiles(e) {
+    return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1;
+  }
+  window.addEventListener('dragenter', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth++;
+    document.body.classList.add('is-dragging');
+  }, true);
+  window.addEventListener('dragover', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+  window.addEventListener('dragleave', function () {
+    depth = Math.max(0, depth - 1);
+    if (!depth) document.body.classList.remove('is-dragging');
+  }, true);
+  window.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    depth = 0;
+    document.body.classList.remove('is-dragging');
+    load(e.dataTransfer.files[0]);
+  }, true);
+
+  // DOSBox meldet Shell-Befehle nicht nach außen, daher wird die getippte Zeile mitgelesen.
+  // Spiele lassen Tastendrücke ohne Enter zurück (etwa „y“ beim Beenden), deshalb zählt nur das Zeilenende.
+  if (dosMode) {
+    var line = '';
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        if (/(exit|\bwin)\s*$/i.test(line)) notify('exit');
+        line = '';
+      } else if (e.key === 'Backspace') {
+        line = line.slice(0, -1);
+      } else if (e.key === 'Escape') {
+        line = '';
+      } else if (e.key.length === 1) {
+        line += e.key;
+      }
+    }, true);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

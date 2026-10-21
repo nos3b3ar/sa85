@@ -11,7 +11,7 @@
   for = "/*"
   [headers.values]
     Content-Security-Policy = """\
-      frame-src https://web.archive.org \
+      frame-src 'self' https://web.archive.org \
         https://cameronsworld.net https://www.cameronsworld.net \
         https://zombo.com https://www.zombo.com \
         https://windows93.net https://www.windows93.net \
@@ -19,7 +19,7 @@
         https://toastytech.com https://www.toastytech.com \
         https://winhistory.de https://www.winhistory.de \
         https://arngren.net https://www.arngren.net; \
-      frame-ancestors 'none'; \
+      frame-ancestors 'self'; \
       object-src 'none'; \
       base-uri 'self'; \
       form-action 'self'\

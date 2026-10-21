@@ -11,15 +11,27 @@ import {
 } from './audio/audio';
 import { BiosSetup } from './boot/BiosSetup';
 import { BootScreen } from './boot/BootScreen';
+import { DosMode } from './boot/DosMode';
 import { PowerScreen } from './boot/PowerScreen';
 import { ScanDisk } from './boot/ScanDisk';
+import { ShutdownScreen } from './boot/ShutdownScreen';
 import { SystemSummary } from './boot/SystemSummary';
 import { Desktop } from './desktop/Desktop';
 import { LegalLinks } from './desktop/LegalLinks';
 import { SplashScreen } from './splash/SplashScreen';
 import { GlobalStyles } from './styles/global';
 
-type Phase = 'power' | 'black' | 'post' | 'setup' | 'scandisk' | 'summary' | 'splash' | 'desktop';
+type Phase =
+  | 'power'
+  | 'black'
+  | 'post'
+  | 'setup'
+  | 'scandisk'
+  | 'summary'
+  | 'splash'
+  | 'desktop'
+  | 'shutdown'
+  | 'dos';
 
 const fanStopBeforeDesktopMs = 1000;
 
@@ -33,6 +45,7 @@ export default function App() {
   const [bootApp, setBootApp] = useState<string | null>(appFromLocation);
   const [phase, setPhase] = useState<Phase>(bootApp ? 'desktop' : 'power');
   const [bootId, setBootId] = useState(0);
+  const [afterShutdown, setAfterShutdown] = useState<'off' | 'restart'>('off');
   const jinglePlayed = useRef(false);
   const desktopTimer = useRef(0);
 
@@ -54,7 +67,25 @@ export default function App() {
     skipToDesktop();
   };
 
-  const linkTone = phase === 'splash' ? 'splash' : phase === 'setup' || phase === 'scandisk' ? 'setup' : 'bios';
+  const linkTone = phase === 'splash' || (phase === 'shutdown' && afterShutdown === 'restart')
+    ? 'splash'
+    : phase === 'setup' || phase === 'scandisk' ? 'setup' : 'bios';
+
+  const shutDown = (choice: 'shutdown' | 'restart' | 'dos') => {
+    stopBootSounds();
+    if (choice === 'dos') {
+      void document.documentElement.requestFullscreen?.().catch(() => undefined);
+      setPhase('dos');
+      return;
+    }
+    setAfterShutdown(choice === 'restart' ? 'restart' : 'off');
+    setPhase('shutdown');
+  };
+
+  const leaveDosMode = () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    boot(false);
+  };
 
   const boot = (withPowerButton: boolean) => {
     unlockAudio();
@@ -83,7 +114,7 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (phase === 'power' || phase === 'setup' || phase === 'scandisk' || phase === 'desktop') return;
+      if (['power', 'setup', 'scandisk', 'desktop', 'shutdown', 'dos'].includes(phase)) return;
       if (event.key !== 'Escape' && event.key !== ' ') return;
       event.preventDefault();
       skipToDesktop();
@@ -130,13 +161,17 @@ export default function App() {
           <Desktop
             initialApp={bootApp}
             onInitialAppOpened={() => setBootApp(null)}
-            onShutdown={() => {
-              stopBootSounds();
-              setPhase('power');
-            }}
-            onRestart={() => boot(false)}
+            onShutdown={shutDown}
           />
-        ) : (
+        ) : null}
+        {phase === 'shutdown' ? (
+          <ShutdownScreen
+            then={afterShutdown}
+            onDone={() => (afterShutdown === 'restart' ? boot(false) : setPhase('power'))}
+          />
+        ) : null}
+        {phase === 'dos' ? <DosMode onExit={leaveDosMode} /> : null}
+        {phase === 'desktop' ? null : (
           <LegalLinks tone={linkTone} onOpen={openLegal} />
         )}
       </div>

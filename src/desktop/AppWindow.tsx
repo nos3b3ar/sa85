@@ -1,4 +1,4 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useCallback, useRef } from 'react';
 import { Button, Window, WindowContent, WindowHeader } from 'react95';
 import { getApp } from '../apps/registry';
 import type { WindowChrome } from '../apps/types';
@@ -22,6 +22,11 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
   const { openApp, resize, toggleMaximize } = useWindows();
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const sizing = useRef<{ edge: Edge; px: number; py: number; start: WindowRect } | null>(null);
+  const closeGuard = useRef<(() => void) | null>(null);
+  const setCloseGuard = useCallback((guard: (() => void) | null) => {
+    closeGuard.current = guard;
+  }, []);
+  const requestClose = () => (closeGuard.current ? closeGuard.current() : onClose());
 
   if (!app || app.kind !== 'window') return null;
   const Icon = app.windowIcon ?? app.icon;
@@ -90,7 +95,8 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
       <Body
         onClose={onClose}
         openApp={openApp}
-        chrome={skinned ? { active, dragHandlers, onMinimize, onClose } : undefined}
+        chrome={skinned ? { active, dragHandlers, onMinimize, onClose: requestClose } : undefined}
+        setCloseGuard={setCloseGuard}
       />
     </Suspense>
   );
@@ -157,7 +163,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
           >
             <span className={maximized ? 'title-restore' : 'title-max'} />
           </Button>
-          <Button size="sm" onClick={onClose} aria-label="Schließen">
+          <Button size="sm" onClick={requestClose} aria-label="Schließen">
             <span className="title-close" />
           </Button>
         </span>

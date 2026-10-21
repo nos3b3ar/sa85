@@ -4,6 +4,7 @@ npm-debug.log*
 node_modules
 dist
 dist-ssr
+public/js-dos
 *.local
 .DS_Store
 .env

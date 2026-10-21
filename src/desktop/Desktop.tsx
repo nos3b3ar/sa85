@@ -8,7 +8,8 @@ import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
 import { DesktopIcon } from './DesktopIcon';
 import { DstDialog } from './DstDialog';
-import { ShutdownDialog } from './ShutdownDialog';
+import { ShutdownDialog, type ShutdownChoice } from './ShutdownDialog';
+import { Standby } from './Standby';
 import { StartMenu } from './StartMenu';
 import { Taskbar } from './Taskbar';
 import { useWindows, WindowManagerProvider } from './WindowManager';
@@ -16,8 +17,7 @@ import { useWindows, WindowManagerProvider } from './WindowManager';
 type DesktopProps = {
   initialApp?: string | null;
   onInitialAppOpened?: () => void;
-  onShutdown: () => void;
-  onRestart: () => void;
+  onShutdown: (choice: Exclude<ShutdownChoice, 'standby'>) => void;
 };
 
 export function Desktop(props: DesktopProps) {
@@ -28,7 +28,7 @@ export function Desktop(props: DesktopProps) {
   );
 }
 
-function DesktopView({ initialApp, onInitialAppOpened, onShutdown, onRestart }: DesktopProps) {
+function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProps) {
   const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
   const openedInitial = useRef(false);
   const settings = useSettings();
@@ -37,6 +37,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown, onRestart }: 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [dst, setDst] = useState<DstNotice | null>(() => shouldShowDstDialog());
   const [shutdownOpen, setShutdownOpen] = useState(false);
+  const [standby, setStandby] = useState(false);
   const [, setViewport] = useState(0);
 
   useEffect(() => {
@@ -56,12 +57,12 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown, onRestart }: 
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
-      if (typing || event.key !== 'Enter' || !selected) return;
+      if (typing || shutdownOpen || event.key !== 'Enter' || !selected) return;
       openApp(selected);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openApp, selected]);
+  }, [openApp, selected, shutdownOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -157,11 +158,15 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown, onRestart }: 
       {dst ? <DstDialog notice={dst} onClose={() => setDst(null)} /> : null}
       {shutdownOpen ? (
         <ShutdownDialog
-          onShutdown={onShutdown}
-          onRestart={onRestart}
+          onChoose={(choice) => {
+            setShutdownOpen(false);
+            if (choice === 'standby') setStandby(true);
+            else onShutdown(choice);
+          }}
           onCancel={() => setShutdownOpen(false)}
         />
       ) : null}
+      {standby ? <Standby onWake={() => setStandby(false)} /> : null}
       {contextMenu ? (
         <MenuList className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
           <MenuListItem

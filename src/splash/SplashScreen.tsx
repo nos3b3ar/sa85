@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { preloadManifest } from '../preload/manifest';
 import { preloadAssets } from '../preload/preloadAssets';
 
@@ -48,17 +48,24 @@ export function SplashScreen({ onSound, onDone }: SplashScreenProps) {
 
   return (
     <div className="splash">
-      <div className="splash-stage">
-        <div className="splash-logo">
-          <div className="splash-brand">Stefan<sup>™</sup></div>
-          <div className="splash-word">
-            <span>Andernach</span>
-            <sup>™</sup>
-            <span className="splash-number">85</span>
-          </div>
+      <SplashStage />
+      <div className="splash-bar" aria-hidden />
+    </div>
+  );
+}
+
+export function SplashStage({ children }: { children?: ReactNode }) {
+  return (
+    <div className="splash-stage">
+      {children}
+      <div className="splash-logo">
+        <div className="splash-brand">Stefan<sup>™</sup></div>
+        <div className="splash-word">
+          <span>Andernach</span>
+          <sup>™</sup>
+          <span className="splash-number">85</span>
         </div>
       </div>
-      <div className="splash-bar" aria-hidden />
     </div>
   );
 }

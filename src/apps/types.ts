@@ -15,4 +15,6 @@ export type AppProps = {
   onClose: () => void;
   openApp: (appId: string) => void;
   chrome?: WindowChrome;
+  /** Ersetzt das Schließen über die Titelleiste, z. B. für eine Rückfrage. onClose schließt weiterhin sofort. */
+  setCloseGuard?: (guard: (() => void) | null) => void;
 };

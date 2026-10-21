@@ -8,7 +8,7 @@ const pad = 6;
 const taskbarHeight = 40;
 
 /** Linke Spalte, von oben nach unten. Die rechte Spalte bleibt für Papierkorb und die Rechtstexte frei. */
-const columnOrder = ['computer', 'about', 'skills', 'portfolio', 'linkedin', 'contact', 'ie', 'winamp', 'games'];
+const columnOrder = ['computer', 'about', 'skills', 'portfolio', 'linkedin', 'contact', 'ie', 'winamp', 'msdos', 'games'];
 
 function metrics() {
   const width = window.innerWidth;

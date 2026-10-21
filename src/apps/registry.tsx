@@ -14,6 +14,7 @@ import { Unmute } from '@react95/icons/Unmute';
 import { User } from '@react95/icons/User';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { profile } from '../content/profile';
+import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
 import { WinampIcon } from './WinampIcon';
@@ -130,6 +131,14 @@ export const desktopApps: DesktopApp[] = [
     component: lazyNamed(() => import('./WinampApp'), 'WinampApp'),
     defaultSize: { width: 413, height: 522 },
     chrome: 'skinned',
+  },
+  {
+    id: 'msdos',
+    title: 'MS DOS',
+    icon: MsDosIcon,
+    kind: 'window',
+    component: lazyNamed(() => import('./DosApp'), 'DosApp'),
+    defaultSize: { width: 664, height: 520 },
   },
   {
     id: 'saforce',
