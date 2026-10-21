@@ -17,6 +17,7 @@ import { profile } from '../content/profile';
 import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
+import { MouseIcon, UsersIcon } from './systemIcons';
 import { WinampIcon } from './WinampIcon';
 import type { Look } from '../settings/settings';
 import type { AppProps } from './types';
@@ -265,6 +266,16 @@ export const desktopApps: DesktopApp[] = [
     kind: 'window',
     component: lazyNamed(() => import('./VolumeApp'), 'VolumeApp'),
     defaultSize: { width: 300, height: 290 },
+  },
+  {
+    id: 'mouse',
+    title: 'Eigenschaften von Maus',
+    icon: MouseIcon,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./MouseApp'), 'MouseApp'),
+    defaultSize: { width: 460, height: 520 },
   },
 ];
 
