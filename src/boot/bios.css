@@ -331,7 +331,7 @@
 
 .usb-reset {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   left: 10px;
   z-index: 5;
   font: 12px "IBM VGA 8x16", "Courier New", monospace;

@@ -282,7 +282,7 @@ export function createPages(usbAvailable: boolean): SetupPage[] {
           option('irqVga', 'Assign IRQ For VGA', enabledDisabled, 'Disabled frees the IRQ of the AGP card.'),
           option('ideMap', 'PCI IDE IRQ Map To', ['PCI-AUTO', 'PCI-SLOT1', 'PCI-SLOT2', 'PCI-SLOT3', 'PCI-SLOT4', 'ISA'], 'Routing of PCI IDE interrupts.'),
           text(),
-          text('PCI IRQ Routing      Bus Dev IRQ'),
+          text(`${'PCI IRQ Routing'.padEnd(25)}Bus Dev IRQ`),
           { kind: 'info', label: 'IDE Controller', value: () => '0   7  14' },
           { kind: 'info', label: 'Serial Bus (USB)', value: (cmos) => `0   7  ${cmos.values.irqUsb === 'Enabled' ? '10' : 'NA'}` },
           { kind: 'info', label: 'Multimedia Device', value: () => '0  13  11' },
