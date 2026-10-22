@@ -23,6 +23,7 @@ import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
 import { MouseIcon, UsersIcon } from './systemIcons';
+import { IcqIcon } from './IcqIcon';
 import { WinampIcon } from './WinampIcon';
 import type { Look } from '../settings/settings';
 import type { AppProps } from './types';
@@ -112,6 +113,16 @@ export const desktopApps: DesktopApp[] = [
     kind: 'window',
     component: lazyNamed(() => import('./ContactApp'), 'ContactApp'),
     defaultSize: { width: 500, height: 440 },
+  },
+  {
+    id: 'icq',
+    title: 'ICQ',
+    windowTitle: 'WinMP Handy',
+    icon: IcqIcon,
+    kind: 'window',
+    component: lazyNamed(() => import('./IcqApp'), 'IcqApp'),
+    defaultSize: { width: 320, height: 560 },
+    sizing: 'content',
   },
   {
     id: 'ie',
