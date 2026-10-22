@@ -5,6 +5,7 @@ node_modules
 dist
 dist-ssr
 public/js-dos
+public/v86
 *.local
 .DS_Store
 .env

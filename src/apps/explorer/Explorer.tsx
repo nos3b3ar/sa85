@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Select } from 'react95';
+import { useDoubleActivate } from '../../desktop/useDoubleActivate';
+import { useT } from '../../i18n';
 import { useSettings } from '../../settings/settings';
 import type { AppProps } from '../types';
-import { addressOrder, folders, type FolderId, type FolderItem } from './folders';
+import { addressOrder, buildFolders, type FolderId, type FolderItem } from './folders';
 
 type History = { stack: FolderId[]; index: number };
-
-const addressOptions = addressOrder.map((id) => ({ value: id, label: folders[id].title }));
 
 function ToolButton({ label, disabled, onClick, children }: {
   label: string;
@@ -26,6 +26,12 @@ function ToolButton({ label, disabled, onClick, children }: {
 
 export function Explorer({ start, openApp, setTitle }: AppProps & { start: FolderId }) {
   const { look } = useSettings();
+  const t = useT();
+  const folders = useMemo(() => buildFolders(t), [t]);
+  const addressOptions = useMemo(
+    () => addressOrder.map((id) => ({ value: id, label: folders[id].title })),
+    [folders],
+  );
   const [history, setHistory] = useState<History>({ stack: [start], index: 0 });
   const [selected, setSelected] = useState<string | null>(null);
   const current = history.stack[history.index];
@@ -62,14 +68,14 @@ export function Explorer({ start, openApp, setTitle }: AppProps & { start: Folde
         <div className="explorer-bars">
           <div className="explorer-toolbar">
             <span className="toolbar-grip" aria-hidden />
-            <ToolButton label="Zurück" disabled={history.index === 0} onClick={() => step(-1)}>
+            <ToolButton label={t.explorer.back} disabled={history.index === 0} onClick={() => step(-1)}>
               <path d="M2 10 9 3v4h9v6H9v4z" />
             </ToolButton>
-            <ToolButton label="Vorwärts" disabled={history.index === history.stack.length - 1} onClick={() => step(1)}>
+            <ToolButton label={t.explorer.forward} disabled={history.index === history.stack.length - 1} onClick={() => step(1)}>
               <path d="M18 10 11 3v4H2v6h9v4z" />
             </ToolButton>
             <ToolButton
-              label="Aufwärts"
+              label={t.explorer.up}
               disabled={!folder.parent}
               onClick={() => folder.parent && navigate(folder.parent)}
             >
@@ -79,7 +85,7 @@ export function Explorer({ start, openApp, setTitle }: AppProps & { start: Folde
           </div>
           <div className="explorer-address">
             <span className="toolbar-grip" aria-hidden />
-            <span className="explorer-address-label">Adresse</span>
+            <span className="explorer-address-label">{t.explorer.address}</span>
             <span className="explorer-address-icon" aria-hidden>
               <FolderIcon variant="16x16_4" />
             </span>
@@ -109,31 +115,52 @@ export function Explorer({ start, openApp, setTitle }: AppProps & { start: Folde
           </aside>
         )}
         <div className="folder-view" onClick={(event) => event.target === event.currentTarget && setSelected(null)}>
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={selected === item.id ? 'folder-item is-selected' : 'folder-item'}
-                onClick={() => setSelected(item.id)}
-                onDoubleClick={() => activate(item)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') activate(item);
-                }}
-              >
-                <Icon variant="32x32_4" />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+          {items.map((item) => (
+            <FolderItemButton
+              key={item.id}
+              item={item}
+              selected={selected === item.id}
+              onSelect={() => setSelected(item.id)}
+              onActivate={() => activate(item)}
+            />
+          ))}
         </div>
       </div>
       <div className="status-bar">
-        <span>{selectedItem ? selectedItem.description : `${items.length} Objekt(e)`}</span>
+        <span>{selectedItem ? selectedItem.description : t.explorer.objects(items.length)}</span>
         <span>{folder.status}</span>
       </div>
     </div>
+  );
+}
+
+function FolderItemButton({ item, selected, onSelect, onActivate }: {
+  item: FolderItem;
+  selected: boolean;
+  onSelect: () => void;
+  onActivate: () => void;
+}) {
+  const Icon = item.icon;
+  const double = useDoubleActivate(onActivate);
+  return (
+    <button
+      type="button"
+      className={selected ? 'folder-item is-selected' : 'folder-item'}
+      onPointerDown={(event) => {
+        if (double.isPrimary(event)) onSelect();
+      }}
+      onPointerUp={double.onPointerUp}
+      onContextMenu={double.onContextMenu}
+      onClick={(event) => {
+        if (event.detail === 0) onSelect();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') onActivate();
+      }}
+    >
+      <Icon variant="32x32_4" />
+      <span>{item.label}</span>
+    </button>
   );
 }
 

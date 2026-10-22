@@ -39,7 +39,8 @@
     }
   }
 
-  var skip = /^(setup|install|instal|config|setsound|uninst|readme)/i;
+  var skip = /^(setup|install|instal|config|setsound|uninst|readme|deice|catalog|dealers|order|vendor|register|help)/i;
+  var installer = /^(install|instal|setup)\.(exe|com|bat)$/i;
 
   function zipEntries(bytes) {
     var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -68,6 +69,10 @@
       var file = path.split('/').pop();
       return /\.(exe|com|bat)$/i.test(file) && !skip.test(file);
     });
+    // Shareware-Archive wie doom19s.zip enthalten nur den Installer; dann startet der.
+    if (!programs.length) {
+      programs = names.filter(function (path) { return installer.test(path.split('/').pop()); });
+    }
     var shallowest = Math.min.apply(null, programs.map(function (path) { return path.split('/').length; }));
     var top = programs.filter(function (path) { return path.split('/').length === shallowest; });
     var lines = [];
@@ -87,7 +92,10 @@
     return base + '\n[autoexec]\n' + ['@echo off', 'mount c .', 'c:', 'set dircmd=/p', 'path %path%;c:\\sa85', 'cls'].concat(lines).join('\n') + '\n';
   }
 
-  var dosMode = new URLSearchParams(location.search).get('mode') === 'dos';
+  var mode = new URLSearchParams(location.search).get('mode');
+  var dosMode = mode === 'dos';
+  // Boot vom USB-Stick: kein Begruessungs-Bundle, der Stick-Inhalt kommt per postMessage.
+  var usbMode = mode === 'usb';
 
   function dosModeWelcome(games, version) {
     return [
@@ -139,6 +147,10 @@
 
   // Uncompressed zip; js-dos only boots bundles that carry .jsdos/dosbox.conf.
   function bundle(files) {
+    return URL.createObjectURL(zipBlob(files));
+  }
+
+  function zipBlob(files) {
     var encoder = new TextEncoder();
     var chunks = [];
     var central = [];
@@ -174,7 +186,7 @@
     end.setUint16(10, files.length, true);
     end.setUint32(12, size, true);
     end.setUint32(16, offset, true);
-    return URL.createObjectURL(new Blob(chunks.concat(central, [end.buffer])));
+    return new Blob(chunks.concat(central, [end.buffer]));
   }
 
   // Real-mode stubs: INT 10h AX=1112h loads the 8x8 font (80x50), AX=0003h restores 80x25.
@@ -219,7 +231,7 @@
   }
 
   function boot() {
-    if (dosMode) return;
+    if (dosMode || usbMode) return;
     start({
       url: bundle([
         { path: '.jsdos/dosbox.conf', contents: conf(['type sa85.txt']) },
@@ -284,9 +296,26 @@
     });
   }
 
+  // Ein Ordner vom Stick wird als Laufwerk C: gemountet.
+  function loadFiles(files, name) {
+    Promise.all(files.map(function (entry) {
+      return entry.file.arrayBuffer().then(function (buffer) {
+        return { path: entry.path, contents: new Uint8Array(buffer) };
+      });
+    })).then(function (entries) {
+      return zipBlob(entries).arrayBuffer().then(function (buffer) {
+        var names = entries.map(function (entry) { return entry.path; });
+        start({ url: bundle([{ path: '.jsdos/dosbox.conf', contents: gameConf(names) }].concat(tools)), initFs: new Uint8Array(buffer) }, name);
+      });
+    }).catch(function () {
+      notify('rejected', { name: name });
+    });
+  }
+
   window.addEventListener('message', function (e) {
     if (e.origin !== location.origin || !e.data || e.data.type !== 'sa85-dos') return;
     if (e.data.action === 'load' && e.data.file) load(e.data.file, e.data.run, e.data.cycles);
+    if (e.data.action === 'files' && e.data.files) loadFiles(e.data.files, e.data.name || 'USB');
     if (e.data.action === 'reset') boot();
     if (e.data.action === 'dosmode' && dosMode && !dosModeStarted) {
       dosModeStarted = true;
@@ -325,7 +354,7 @@
 
   // DOSBox meldet Shell-Befehle nicht nach außen, daher wird die getippte Zeile mitgelesen.
   // Spiele lassen Tastendrücke ohne Enter zurück (etwa „y“ beim Beenden), deshalb zählt nur das Zeilenende.
-  if (dosMode) {
+  if (dosMode || usbMode) {
     var line = '';
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {

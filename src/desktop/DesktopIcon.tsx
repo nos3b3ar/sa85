@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import type { DesktopApp } from '../apps/registry';
+import { appTitle, useT } from '../i18n';
 import { snapIconPosition, type IconPoint } from './iconLayout';
+import { useDoubleActivate } from './useDoubleActivate';
 
 type DesktopIconProps = {
   app: DesktopApp;
@@ -11,23 +13,25 @@ type DesktopIconProps = {
   onMove: (position: IconPoint) => void;
 };
 
-const dragThreshold = 4;
+const mouseDragThreshold = 4;
+const coarseDragThreshold = 16;
 
 export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove }: DesktopIconProps) {
   const Icon = app.icon;
-  const drag = useRef<{ dx: number; dy: number; moved: boolean } | null>(null);
+  const t = useT();
+  const drag = useRef<{ dx: number; dy: number; moved: boolean; pointerType: string } | null>(null);
   const liveRef = useRef<IconPoint | null>(null);
-  const skipOpen = useRef(false);
   const [live, setLive] = useState<IconPoint | null>(null);
   const spot = live ?? position;
+  const activate = useDoubleActivate(onOpen);
 
   const finishDrag = () => {
     const current = drag.current;
     drag.current = null;
-    skipOpen.current = Boolean(current?.moved);
     if (current?.moved && liveRef.current) onMove(snapIconPosition(liveRef.current));
     liveRef.current = null;
     setLive(null);
+    return Boolean(current?.moved);
   };
 
   return (
@@ -36,9 +40,14 @@ export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove 
       className={['desktop-icon', selected ? 'is-selected' : '', live ? 'is-dragging' : ''].filter(Boolean).join(' ')}
       style={{ left: spot.x, top: spot.y }}
       onPointerDown={(event) => {
-        if (event.button !== 0) return;
+        if (!activate.isPrimary(event)) return;
         onSelect();
-        drag.current = { dx: event.clientX - spot.x, dy: event.clientY - spot.y, moved: false };
+        drag.current = {
+          dx: event.clientX - spot.x,
+          dy: event.clientY - spot.y,
+          moved: false,
+          pointerType: event.pointerType,
+        };
         try {
           event.currentTarget.setPointerCapture(event.pointerId);
         } catch {
@@ -49,23 +58,24 @@ export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove 
         const current = drag.current;
         if (!current) return;
         const next = { x: event.clientX - current.dx, y: event.clientY - current.dy };
-        if (!current.moved && Math.hypot(next.x - position.x, next.y - position.y) < dragThreshold) return;
+        const threshold = current.pointerType === 'mouse' ? mouseDragThreshold : coarseDragThreshold;
+        if (!current.moved && Math.hypot(next.x - position.x, next.y - position.y) < threshold) return;
         current.moved = true;
         liveRef.current = next;
         setLive(next);
       }}
-      onPointerUp={finishDrag}
-      onPointerCancel={finishDrag}
-      onDoubleClick={() => {
-        if (skipOpen.current) {
-          skipOpen.current = false;
-          return;
-        }
-        onOpen();
+      onPointerUp={(event) => {
+        if (finishDrag()) activate.reset();
+        else activate.onPointerUp(event);
       }}
+      onPointerCancel={() => {
+        finishDrag();
+        activate.reset();
+      }}
+      onContextMenu={activate.onContextMenu}
     >
       <Icon variant="32x32_4" />
-      <span>{app.title}</span>
+      <span>{appTitle(t, app)}</span>
     </button>
   );
 }

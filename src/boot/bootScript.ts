@@ -33,6 +33,7 @@ export const bootScript = {
   ],
   memoryLabel: 'Memory Test :  ',
   memoryDurationMs: 2800,
+  quickMemoryDurationMs: 1400,
   pnp: [
     '',
     'Award Plug and Play BIOS Extension v1.0A',
@@ -43,7 +44,10 @@ export const bootScript = {
   ideSlave: 'Detecting IDE Primary Slave   ... ',
   ideSlaveValue: '[Press F4 to skip]',
   footerSetup: 'Press DEL to enter SETUP',
+  footerResume: 'Press F1 to continue, DEL to enter SETUP',
   footerId: `${machine.biosDate}-${machine.biosId}`,
+  checksumError: 'CMOS checksum error - Defaults loaded',
+  diskBootFailure: 'DISK BOOT FAILURE, INSERT SYSTEM DISK AND PRESS ENTER',
   delays: {
     beforeMemory: 450,
     afterMemory: 400,

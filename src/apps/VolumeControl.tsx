@@ -1,16 +1,18 @@
 import { Checkbox, Slider } from 'react95';
 import { playDing } from '../audio/audio';
+import { useT } from '../i18n';
 import { updateSettings, useSettings } from '../settings/settings';
 
 type VolumeControlProps = {
   title?: string;
 };
 
-export function VolumeControl({ title = 'Lautstärke' }: VolumeControlProps) {
+export function VolumeControl({ title }: VolumeControlProps) {
+  const t = useT();
   const settings = useSettings();
   return (
     <div className="volume-control">
-      <span>{title}</span>
+      <span>{title ?? t.volume.label}</span>
       <Slider
         orientation="vertical"
         size="120px"
@@ -22,7 +24,7 @@ export function VolumeControl({ title = 'Lautstärke' }: VolumeControlProps) {
         onChangeCommitted={() => playDing()}
       />
       <Checkbox
-        label="Ton aus"
+        label={t.volume.mute}
         checked={settings.muted}
         onChange={(event) => updateSettings({ muted: event.target.checked })}
       />

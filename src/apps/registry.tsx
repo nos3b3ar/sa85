@@ -4,8 +4,12 @@ import { Desk100 } from '@react95/icons/Desk100';
 import { Folder } from '@react95/icons/Folder';
 import { Globe } from '@react95/icons/Globe';
 import { Ie } from '@react95/icons/Ie';
+import { Intl101 } from '@react95/icons/Intl101';
+import { Joy102 } from '@react95/icons/Joy102';
 import { Mail } from '@react95/icons/Mail';
+import { Network2 } from '@react95/icons/Network2';
 import { Notepad } from '@react95/icons/Notepad';
+import { PowerOn } from '@react95/icons/PowerOn';
 import { RecycleEmpty } from '@react95/icons/RecycleEmpty';
 import { Sol1 } from '@react95/icons/Sol1';
 import { Winmine1 } from '@react95/icons/Winmine1';
@@ -18,6 +22,7 @@ import { AssistantIcon } from './AssistantIcon';
 import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
+import { MouseIcon, UsersIcon } from './systemIcons';
 import { WinampIcon } from './WinampIcon';
 import type { Look } from '../settings/settings';
 import type { AppProps } from './types';
@@ -58,11 +63,8 @@ type LinkApp = AppBase & {
 
 export type DesktopApp = WindowApp | LinkApp;
 
-function lazyNamed<T extends Record<string, unknown>>(
-  loader: () => Promise<T>,
-  name: { [K in keyof T]: T[K] extends ComponentType<AppProps> ? K : never }[keyof T],
-) {
-  return lazy(() => loader().then((mod) => ({ default: mod[name] as ComponentType<AppProps> })));
+function lazyNamed<K extends string, M extends Record<K, ComponentType<AppProps>>>(loader: () => Promise<M>, name: K) {
+  return lazy(() => loader().then((mod) => ({ default: mod[name] })));
 }
 
 /**
@@ -279,6 +281,66 @@ export const desktopApps: DesktopApp[] = [
     kind: 'window',
     component: lazyNamed(() => import('./VolumeApp'), 'VolumeApp'),
     defaultSize: { width: 300, height: 290 },
+  },
+  {
+    id: 'mouse',
+    title: 'Eigenschaften von Maus',
+    icon: MouseIcon,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./MouseApp'), 'MouseApp'),
+    defaultSize: { width: 460, height: 540 },
+  },
+  {
+    id: 'regional',
+    title: 'Eigenschaften von Ländereinstellungen',
+    icon: Intl101,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./RegionalApp'), 'RegionalApp'),
+    defaultSize: { width: 500, height: 560 },
+  },
+  {
+    id: 'users',
+    title: 'Benutzereinstellungen',
+    icon: UsersIcon,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./UsersApp'), 'UsersApp'),
+    defaultSize: { width: 480, height: 500 },
+  },
+  {
+    id: 'network',
+    title: 'Netzwerk',
+    icon: Network2,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./NetworkApp'), 'NetworkApp'),
+    defaultSize: { width: 540, height: 580 },
+  },
+  {
+    id: 'power',
+    title: 'Eigenschaften von Energieverwaltung',
+    icon: PowerOn,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./PowerApp'), 'PowerApp'),
+    defaultSize: { width: 460, height: 580 },
+  },
+  {
+    id: 'gamepad',
+    title: 'Gamecontroller',
+    icon: Joy102,
+    showOnDesktop: false,
+    showInStartMenu: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./GameControllerApp'), 'GameControllerApp'),
+    defaultSize: { width: 480, height: 560 },
   },
 ];
 

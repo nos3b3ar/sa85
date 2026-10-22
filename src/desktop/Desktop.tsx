@@ -3,6 +3,7 @@ import { MenuList, MenuListItem } from 'react95';
 import { ScreensaverHost } from '../screensaver/ScreensaverHost';
 import { getSettings, updateSettings, useSettings } from '../settings/settings';
 import { desktopApps } from '../apps/registry';
+import { useT } from '../i18n';
 import { defaultIconPosition } from './iconLayout';
 import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
@@ -41,12 +42,31 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
   const [shutdownOpen, setShutdownOpen] = useState(false);
   const [standby, setStandby] = useState(false);
   const [, setViewport] = useState(0);
+  const t = useT();
+  const monitorMinutes = settings.powerTimeouts[settings.powerScheme].monitor;
+  const leftHanded = settings.mouse.leftHanded;
 
   useEffect(() => {
     const onResize = () => setViewport((tick) => tick + 1);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    if (monitorMinutes <= 0 || standby) return;
+    let timer = 0;
+    const arm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setStandby(true), monitorMinutes * 60_000);
+    };
+    const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+    events.forEach((name) => window.addEventListener(name, arm, { capture: true, passive: true }));
+    arm();
+    return () => {
+      window.clearTimeout(timer);
+      events.forEach((name) => window.removeEventListener(name, arm, { capture: true }));
+    };
+  }, [monitorMinutes, standby]);
 
   useEffect(() => {
     if (openedInitial.current || !initialApp) return;
@@ -110,10 +130,14 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
       className="desktop"
       style={{ backgroundColor: settings.desktopColor }}
       onMouseDown={clearIfEmpty}
+      onMouseUp={(event) => {
+        if (!leftHanded || event.button !== 0 || !onBackground(event.target)) return;
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }}
       onContextMenu={(event) => {
         if (!onBackground(event.target)) return;
         event.preventDefault();
-        setContextMenu({ x: event.clientX, y: event.clientY });
+        if (!leftHanded) setContextMenu({ x: event.clientX, y: event.clientY });
       }}
     >
       {desktopApps.filter((app) => app.showOnDesktop !== false).map((app) => (
@@ -192,7 +216,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
               toggleDesktop();
             }}
           >
-            Desktop anzeigen
+            {t.shell.showDesktop}
           </MenuListItem>
           <MenuListItem
             size="sm"
@@ -210,7 +234,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
               openApp('display');
             }}
           >
-            Eigenschaften
+            {t.shell.properties}
           </MenuListItem>
         </MenuList>
       ) : null}

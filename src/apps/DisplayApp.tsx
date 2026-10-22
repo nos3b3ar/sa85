@@ -16,26 +16,14 @@ import { savers, getSaver } from '../screensaver/catalog';
 import { previewScreensaver } from '../screensaver/ScreensaverHost';
 import { SaverCanvas } from '../screensaver/SaverCanvas';
 import { getSettings, updateSettings, type SaverId, type Settings } from '../settings/settings';
+import { useT } from '../i18n';
 import { DialogFooter } from './DialogFooter';
 import { LookPicker } from './shared/LookPicker';
 import type { AppProps } from './types';
 
 type Draft = Pick<Settings, 'desktopColor' | 'saver' | 'saverWaitSeconds' | 'saverText3d' | 'saverMarqueeText' | 'look'>;
 
-const backgrounds = [
-  { label: '(Kein)', color: '#008080' },
-  { label: 'Mitternacht', color: '#000080' },
-  { label: 'Schiefer', color: '#808080' },
-  { label: 'Tannengrün', color: '#004000' },
-  { label: 'Aubergine', color: '#400040' },
-  { label: 'Ziegel', color: '#800000' },
-  { label: 'Schwarz', color: '#000000' },
-];
-
-const saverOptions = [
-  { label: '(Kein)', value: 'none' as SaverId },
-  ...savers.map((saver) => ({ label: saver.name, value: saver.id as SaverId })),
-];
+const backgroundColors = ['#008080', '#000080', '#808080', '#004000', '#400040', '#800000', '#000000'];
 
 function pickDraft(settings: Settings): Draft {
   const { desktopColor, saver, saverWaitSeconds, saverText3d, saverMarqueeText, look } = settings;
@@ -43,6 +31,12 @@ function pickDraft(settings: Settings): Draft {
 }
 
 export function DisplayApp({ onClose }: AppProps) {
+  const t = useT();
+  const backgrounds = backgroundColors.map((color, index) => ({ label: t.display.backgrounds[index], color }));
+  const saverOptions = [
+    { label: t.display.saverNone, value: 'none' as SaverId },
+    ...savers.map((saver) => ({ label: t.display.savers[saver.id], value: saver.id as SaverId })),
+  ];
   const [tab, setTab] = useState(1);
   const [draft, setDraft] = useState<Draft>(() => pickDraft(getSettings()));
   const [saved, setSaved] = useState<Draft>(draft);
@@ -61,10 +55,11 @@ export function DisplayApp({ onClose }: AppProps) {
   return (
     <div className="props-dialog">
       <Tabs value={tab} onChange={(value) => setTab(value as number)}>
-        <Tab value={0}>Hintergrund</Tab>
-        <Tab value={1}>Bildschirmschoner</Tab>
-        <Tab value={2}>Einstellungen</Tab>
-        <Tab value={3}>Darstellung</Tab>
+        {t.display.tabs.map((label, index) => (
+          <Tab key={label} value={index}>
+            {label}
+          </Tab>
+        ))}
       </Tabs>
       <TabBody className="props-body">
         {tab === 0 ? (
@@ -72,7 +67,7 @@ export function DisplayApp({ onClose }: AppProps) {
             <div className="monitor-wrap">
               <Monitor backgroundStyles={{ background: draft.desktopColor }} />
             </div>
-            <GroupBox label="Hintergrund">
+            <GroupBox label={t.display.background}>
               <div className="background-row">
                 <Frame variant="field" className="pick-list">
                   {backgrounds.map((item) => (
@@ -88,7 +83,7 @@ export function DisplayApp({ onClose }: AppProps) {
                   ))}
                 </Frame>
                 <label className="color-field">
-                  Farbe:
+                  {t.display.color}
                   <ColorInput
                     value={draft.desktopColor}
                     onChange={(event) => patch({ desktopColor: event.target.value })}
@@ -111,7 +106,7 @@ export function DisplayApp({ onClose }: AppProps) {
                 )}
               </Monitor>
             </div>
-            <GroupBox label="Bildschirmschoner">
+            <GroupBox label={t.display.saver}>
               <div className="saver-row">
                 <Select
                   width={180}
@@ -124,18 +119,18 @@ export function DisplayApp({ onClose }: AppProps) {
                   }}
                 />
                 <Button disabled={!textKey} onClick={() => setEditingText((value) => !value)}>
-                  Einstellungen...
+                  {t.display.saverSettings}
                 </Button>
                 <Button
                   disabled={draft.saver === 'none'}
                   onClick={() => previewScreensaver(draft.saver, draft.saverText3d, draft.saverMarqueeText)}
                 >
-                  Vorschau
+                  {t.display.preview}
                 </Button>
               </div>
               {editingText && textKey ? (
                 <label className="saver-text">
-                  {draft.saver === 'marquee' ? 'Lauftext:' : 'Text:'}
+                  {draft.saver === 'marquee' ? t.display.marqueeText : t.display.text}
                   <TextInput
                     value={draft[textKey]}
                     maxLength={draft.saver === 'marquee' ? 120 : 24}
@@ -145,7 +140,7 @@ export function DisplayApp({ onClose }: AppProps) {
                 </label>
               ) : null}
               <div className="saver-wait">
-                <span>Wartezeit:</span>
+                <span>{t.display.wait}</span>
                 <NumberInput
                   min={5}
                   max={3600}
@@ -154,14 +149,14 @@ export function DisplayApp({ onClose }: AppProps) {
                   value={draft.saverWaitSeconds}
                   onChange={(value) => patch({ saverWaitSeconds: Math.max(5, Math.round(value)) })}
                 />
-                <span>Sekunden</span>
+                <span>{t.display.seconds}</span>
               </div>
             </GroupBox>
-            <GroupBox label="Energiesparfunktionen des Bildschirms">
+            <GroupBox label={t.display.energy}>
               <div className="energy-row">
                 <img src="/img/energy-star.png" alt="Energy Star" />
-                <p>Klicken Sie auf „Einstellungen“, um die Energieoptionen für Ihren Bildschirm anzupassen.</p>
-                <Button disabled>Einstellungen...</Button>
+                <p>{t.display.energyText}</p>
+                <Button disabled>{t.display.saverSettings}</Button>
               </div>
             </GroupBox>
           </div>
@@ -172,12 +167,12 @@ export function DisplayApp({ onClose }: AppProps) {
               <Monitor backgroundStyles={{ background: draft.desktopColor }} />
             </div>
             <dl className="facts">
-              <dt>Anzeige:</dt>
+              <dt>{t.display.monitor}</dt>
               <dd>Plug & Play-Monitor an NVIDIA GeForce4 MX 440</dd>
-              <dt>Farbpalette:</dt>
+              <dt>{t.display.palette}</dt>
               <dd>True Color (32 Bit)</dd>
-              <dt>Bildschirmbereich:</dt>
-              <dd>{window.innerWidth} x {window.innerHeight} Pixel</dd>
+              <dt>{t.display.area}</dt>
+              <dd>{t.display.pixels(window.innerWidth, window.innerHeight)}</dd>
             </dl>
           </div>
         ) : null}
