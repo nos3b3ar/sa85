@@ -15,6 +15,8 @@ export type SaverId =
 
 export type Look = '95' | '98';
 
+export type AssistantId = 'clippy' | 'merlin';
+
 export type Settings = {
   /** Oberfläche im Stil von Windows 95 oder Windows 98. */
   look: Look;
@@ -28,6 +30,18 @@ export type Settings = {
   /** Einwahl-Dialog des Retro-Browsers nicht erneut zeigen. */
   autoConnect: boolean;
   iconPositions: Record<string, { x: number; y: number }>;
+  /** Ausgewählter Office-Assistent auf dem Desktop. */
+  assistant: AssistantId;
+  /** Ob der Assistent auf dem Desktop sichtbar ist. */
+  assistantEnabled: boolean;
+  /** Ob der Einrichtungs-Assistent bereits abgeschlossen wurde. */
+  assistantSetupDone: boolean;
+  /** Ob der Assistent seine eigenen Soundeffekte abspielt. */
+  assistantSounds: boolean;
+  /** Ob der Assistent subtile Entdecker-Tipps zur Website gibt. */
+  assistantTips: boolean;
+  /** Position des Assistenten auf dem Desktop. */
+  assistantPosition: { x: number; y: number } | null;
 };
 
 const storageKey = 'sa85-settings';
@@ -43,6 +57,12 @@ export const defaultSettings: Settings = {
   saverMarqueeText: 'Willkommen auf dem Schreibtisch von Stefan Andernach!',
   autoConnect: false,
   iconPositions: {},
+  assistant: 'merlin',
+  assistantEnabled: true,
+  assistantSetupDone: false,
+  assistantSounds: true,
+  assistantTips: true,
+  assistantPosition: null,
 };
 
 let current: Settings = load();
@@ -61,6 +81,15 @@ function readIconPositions(value: unknown): Settings['iconPositions'] {
   return positions;
 }
 
+function readPoint(value: unknown): { x: number; y: number } | null {
+  if (!value || typeof value !== 'object') return null;
+  const { x, y } = value as { x?: unknown; y?: unknown };
+  if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+    return { x, y };
+  }
+  return null;
+}
+
 function load(): Settings {
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -68,7 +97,13 @@ function load(): Settings {
     const stored = JSON.parse(raw) as Partial<Settings>;
     if (stored.saverText3d === 'Andernach85') stored.saverText3d = 'sa85';
     if (stored.look !== '95' && stored.look !== '98') delete stored.look;
-    return { ...defaultSettings, ...stored, iconPositions: readIconPositions(stored.iconPositions) };
+    if (stored.assistant !== 'clippy' && stored.assistant !== 'merlin') delete stored.assistant;
+    return {
+      ...defaultSettings,
+      ...stored,
+      iconPositions: readIconPositions(stored.iconPositions),
+      assistantPosition: readPoint(stored.assistantPosition),
+    };
   } catch {
     return defaultSettings;
   }

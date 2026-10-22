@@ -14,6 +14,7 @@ import { Unmute } from '@react95/icons/Unmute';
 import { User } from '@react95/icons/User';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { profile } from '../content/profile';
+import { AssistantIcon } from './AssistantIcon';
 import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
@@ -57,8 +58,11 @@ type LinkApp = AppBase & {
 
 export type DesktopApp = WindowApp | LinkApp;
 
-function lazyNamed(loader: () => Promise<Record<string, ComponentType<AppProps>>>, name: string) {
-  return lazy(() => loader().then((mod) => ({ default: mod[name] })));
+function lazyNamed<T extends Record<string, unknown>>(
+  loader: () => Promise<T>,
+  name: { [K in keyof T]: T[K] extends ComponentType<AppProps> ? K : never }[keyof T],
+) {
+  return lazy(() => loader().then((mod) => ({ default: mod[name] as ComponentType<AppProps> })));
 }
 
 /**
@@ -199,6 +203,16 @@ export const desktopApps: DesktopApp[] = [
     component: lazyNamed(() => import('./explorer/Explorer'), 'ControlPanelApp'),
     defaultSize: { width: 640, height: 440 },
     lookSize: { '98': { width: 780, height: 540 } },
+  },
+  {
+    id: 'assistant',
+    title: 'Office-Assistent',
+    icon: AssistantIcon,
+    showOnDesktop: false,
+    kind: 'window',
+    component: lazyNamed(() => import('./AssistantApp'), 'AssistantApp'),
+    defaultSize: { width: 472, height: 356 },
+    sizing: 'content',
   },
   {
     id: 'impressum',

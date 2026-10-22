@@ -6,6 +6,7 @@ import { desktopApps } from '../apps/registry';
 import { defaultIconPosition } from './iconLayout';
 import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
+import { DesktopAssistant } from './DesktopAssistant';
 import { DesktopIcon } from './DesktopIcon';
 import { DstDialog } from './DstDialog';
 import { ShutdownDialog, type ShutdownChoice } from './ShutdownDialog';
@@ -31,6 +32,7 @@ export function Desktop(props: DesktopProps) {
 function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProps) {
   const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
   const openedInitial = useRef(false);
+  const openedWizard = useRef(false);
   const settings = useSettings();
   const [selected, setSelected] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,6 +54,13 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
     openApp(initialApp);
     onInitialAppOpened?.();
   }, [initialApp, onInitialAppOpened, openApp]);
+
+  // Einrichtungs-Wizard des Office-Assistenten beim ersten Besuch öffnen
+  useEffect(() => {
+    if (openedWizard.current || initialApp || settings.assistantSetupDone) return;
+    openedWizard.current = true;
+    openApp('assistant');
+  }, [initialApp, openApp, settings.assistantSetupDone]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -82,9 +91,11 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
       return !current || win.z > current.z ? win.id : top;
     }, null);
 
+  const activeWin = windows.find((win) => win.id === activeId);
+
   const onBackground = (target: EventTarget) =>
     !(target as HTMLElement).closest(
-      '.desktop-icon, .app-window, [data-start-root], .taskbar, .dst-window, .shutdown-window, .context-menu',
+      '.desktop-icon, .app-window, [data-start-root], .taskbar, .dst-window, .shutdown-window, .context-menu, .desktop-assistant',
     );
 
   const clearIfEmpty = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -134,6 +145,11 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
           onMove={(x, y) => move(win.id, x, y)}
         />
       ))}
+      <DesktopAssistant
+        openApp={openApp}
+        activeAppId={activeWin?.appId ?? null}
+        paused={standby || shutdownOpen}
+      />
       <Taskbar
         windows={windows}
         activeId={activeId}
@@ -177,6 +193,15 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
             }}
           >
             Desktop anzeigen
+          </MenuListItem>
+          <MenuListItem
+            size="sm"
+            onClick={() => {
+              setContextMenu(null);
+              openApp('assistant');
+            }}
+          >
+            Office-Assistent...
           </MenuListItem>
           <MenuListItem
             size="sm"

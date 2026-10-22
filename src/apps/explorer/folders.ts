@@ -16,6 +16,7 @@ import { Unmute } from '@react95/icons/Unmute';
 import { Wab321019 } from '@react95/icons/Wab321019';
 import type { ComponentType } from 'react';
 import { machine } from '../../boot/bootScript';
+import { AssistantIcon } from '../AssistantIcon';
 import { desktopApps, type DesktopIconComponent } from '../registry';
 
 export type FolderId = 'computer' | 'control' | 'games' | 'recycle';
@@ -23,7 +24,7 @@ export type FolderId = 'computer' | 'control' | 'games' | 'recycle';
 export type FolderItem = {
   id: string;
   label: string;
-  icon: ComponentType<{ variant?: '32x32_4' }>;
+  icon: DesktopIconComponent | ComponentType<{ variant?: '32x32_4' }>;
   /** Text in der Web-Ansicht und in der Statusleiste, wenn das Objekt markiert ist. */
   description: string;
   /** Doppelklick öffnet einen Ordner im selben Fenster oder eine App in einem neuen. */
@@ -96,6 +97,13 @@ export const folders: Record<FolderId, FolderDef> = {
         open: { app: 'volume' },
       },
       { id: 'network', label: 'Netzwerk', icon: Network2, description: 'Konfiguriert Netzwerkhardware und -software.' },
+      {
+        id: 'assistant',
+        label: 'Office-Assistent',
+        icon: AssistantIcon,
+        description: 'Wählt den animierten Assistenten (Karl Klammer oder Merlin) und seine Tipps aus.',
+        open: { app: 'assistant' },
+      },
       {
         id: 'system',
         label: 'System',

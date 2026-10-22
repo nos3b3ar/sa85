@@ -75,7 +75,11 @@ export const impressum: LegalDocument = {
         },
         {
           type: 'p',
-          parts: ['Die Fenster und Symbole stammen aus der Bibliothek react95.'],
+          parts: [
+            'Die Fenster und Symbole stammen aus der Bibliothek react95, die Animationen des Office-Assistenten nutzen das Paket clippyjs (MIT-Lizenz, ',
+            { label: 'github.com/pi0/clippyjs', href: 'https://github.com/pi0/clippyjs' },
+            ').',
+          ],
         },
         {
           type: 'p',
@@ -158,7 +162,7 @@ export const datenschutz: LegalDocument = {
         {
           type: 'p',
           parts: [
-            'Im lokalen Speicher des Browsers liegen Einträge, die Sie selbst auslösen. Unter „sa85-settings“ stehen Lautstärke, Stummschaltung, Desktopfarbe, Anordnung der Symbole, Bildschirmschoner und, wenn Sie es im Einwahl-Dialog ankreuzen, die Erlaubnis, den Retro-Browser künftig ohne neue Nachfrage zu verbinden. Unter „sa85-dst-…“ steht, dass der Hinweis zur Zeitumstellung schon angezeigt wurde.',
+            'Im lokalen Speicher des Browsers liegen Einträge, die Sie selbst auslösen. Unter „sa85-settings“ stehen Lautstärke, Stummschaltung, Desktopfarbe, Anordnung der Symbole, Bildschirmschoner, Einstellungen des Office-Assistenten und, wenn Sie es im Einwahl-Dialog ankreuzen, die Erlaubnis, den Retro-Browser künftig ohne neue Nachfrage zu verbinden. Unter „sa85-dst-…“ steht, dass der Hinweis zur Zeitumstellung schon angezeigt wurde.',
           ],
         },
         {

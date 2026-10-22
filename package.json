@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@react95/icons": "^2.6.0",
+    "clippyjs": "^0.1.0",
     "js-dos": "^8.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

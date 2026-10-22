@@ -21,5 +21,6 @@ export const preloadManifest: PreloadItem[] = [
   { id: 'contact', type: 'module', load: () => import('../apps/ContactApp') },
   { id: 'explorer', type: 'module', load: () => import('../apps/explorer/Explorer') },
   { id: 'browser', type: 'module', load: () => import('../apps/BrowserApp') },
+  { id: 'assistant', type: 'module', load: () => import('../apps/AssistantApp') },
   { id: 'saver-default', type: 'module', load: () => import('../screensaver/savers/pipes') },
 ];
