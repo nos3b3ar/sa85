@@ -213,6 +213,85 @@ export function playDing() {
   tone(880, 0.09, 0.05);
 }
 
+// PIT-Kanal 2 mit Teiler 1331: die Tonhöhe des klassischen PC-Speaker-Pieps.
+const speakerHz = 1193180 / 1331;
+
+/** PC-Speaker: Rechteck mit hartem Ein- und Ausschalten statt abklingender Hüllkurve. */
+function speakerBeep(duration: number, baseVolume: number, delay = 0) {
+  const volume = baseVolume * effectiveVolume();
+  if (volume <= 0) return;
+  const ctx = context();
+  if (!ctx) return;
+  const start = ctx.currentTime + delay;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = 'square';
+  oscillator.frequency.value = speakerHz;
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(volume, start + 0.004);
+  gain.gain.setValueAtTime(volume, start + duration - 0.004);
+  gain.gain.linearRampToValueAtTime(0, start + duration);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.01);
+}
+
+/** Ein kurzer Piep nach bestandenem Speichertest. */
+export function playPostBeep() {
+  speakerBeep(0.14, 0.05);
+}
+
+export function playDiskBootFailureBeep() {
+  speakerBeep(0.75, 0.06);
+}
+
+/** Langer Piep, danach alle paar Sekunden erneut, bis stop() aufgerufen wird. */
+export function startDiskBootFailureBeep(intervalMs = 4000) {
+  playDiskBootFailureBeep();
+  const timer = window.setInterval(playDiskBootFailureBeep, intervalMs);
+  return () => window.clearInterval(timer);
+}
+
+let floppySeekBuffer: AudioBuffer | null = null;
+
+/** Kopfschritte des Diskettenlaufwerks: hinaus zur Spur 40 und zurück, je Schritt ein kurzes Klicken. */
+function floppySeekSound(ctx: AudioContext) {
+  if (floppySeekBuffer && floppySeekBuffer.sampleRate === ctx.sampleRate) return floppySeekBuffer;
+  const rate = ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, Math.round(rate * 0.62), rate);
+  const data = buffer.getChannelData(0);
+  const click = (at: number, strength: number) => {
+    const offset = Math.round(at * rate);
+    const length = Math.round(rate * 0.0026);
+    for (let index = 0; index < length && offset + index < data.length; index += 1) {
+      const t = index / rate;
+      const decay = Math.exp(-t * 2600);
+      data[offset + index] += strength * decay * (Math.sin(2 * Math.PI * 1850 * t) * 0.7 + (Math.random() * 2 - 1) * 0.3);
+    }
+  };
+  const step = 0.0034;
+  for (let index = 0; index < 40; index += 1) click(0.02 + index * step, 0.55);
+  for (let index = 0; index < 40; index += 1) click(0.24 + index * step, 0.5);
+  click(0.39, 0.9);
+  floppySeekBuffer = buffer;
+  return buffer;
+}
+
+export function playFloppySeek() {
+  const volume = 0.5 * effectiveVolume();
+  if (volume <= 0) return;
+  const ctx = context();
+  if (!ctx) return;
+  const source = ctx.createBufferSource();
+  source.buffer = floppySeekSound(ctx);
+  const gain = ctx.createGain();
+  gain.gain.value = volume;
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
+
 function startupVolume() {
   return Math.min(1, 0.85 * effectiveVolume());
 }
