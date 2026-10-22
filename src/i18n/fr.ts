@@ -547,4 +547,10 @@ export const fr: Messages = {
     noVibration: 'Ce contrôleur ou ce navigateur ne prend pas en charge la vibration.',
     disconnected: 'Le contrôleur a été déconnecté.',
   },
+  boot: {
+    usbConsentQuestion: 'Autoriser l\'accès à la clé USB ?',
+    usbConsentNote: 'Le navigateur ouvre ensuite un sélecteur de dossier. Le dossier fait office de clé et est uniquement lu, jamais modifié.',
+    usbConsentYes: 'Oui',
+    usbConsentNo: 'Non',
+  },
 };

@@ -547,4 +547,10 @@ export const en: Messages = {
     noVibration: 'This controller or browser does not support vibration.',
     disconnected: 'The controller has been disconnected.',
   },
+  boot: {
+    usbConsentQuestion: 'Allow access to the USB stick?',
+    usbConsentNote: 'Your browser will then open a folder picker. The folder acts as the stick and is only read, never written.',
+    usbConsentYes: 'Yes',
+    usbConsentNo: 'No',
+  },
 };

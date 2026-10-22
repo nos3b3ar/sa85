@@ -547,4 +547,10 @@ export const es: Messages = {
     noVibration: 'Este controlador o navegador no admite la vibración.',
     disconnected: 'El controlador se ha desconectado.',
   },
+  boot: {
+    usbConsentQuestion: '¿Permitir el acceso a la memoria USB?',
+    usbConsentNote: 'A continuación, el navegador abrirá un selector de carpetas. La carpeta actúa como memoria USB y solo se lee, nunca se escribe.',
+    usbConsentYes: 'Sí',
+    usbConsentNo: 'No',
+  },
 };

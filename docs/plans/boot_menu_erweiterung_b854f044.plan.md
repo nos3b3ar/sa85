@@ -4,31 +4,31 @@ overview: Das Award-CMOS-Setup (v4.51PG-Fiktion) wird von einem fast leeren Men�
 todos:
   - id: setup-shell
     content: BiosSetup-Unterseiten-Framework (Enter öffnet, ESC zurück, gelbe Auswahl, Item-Help-Zeile, Save-Confirm-Dialoge)
-    status: pending
+    status: completed
   - id: bios-features
     content: BIOS FEATURES SETUP inkl. Boot Sequence, Quick POST, Floppy Seek, NumLock, Virus Warning, Security Option
-    status: pending
+    status: completed
   - id: boot-fail
     content: bootfail-Phase bei nicht bootfähiger Reihenfolge/entferntem HDD; Award-Text DISK BOOT FAILURE… plus playDiskBootFailureBeep
-    status: pending
+    status: completed
   - id: usb-boot
     content: USB-HDD/USB-ZIP in Boot Sequence inkl. Bestätigungsdialog an BIOS-FEATURES-Stelle; showDirectoryPicker mode read; Fallback; Startpfad js-dos/v86 laut Inhaltsliste
-    status: pending
+    status: completed
   - id: post-hooks
     content: BootScreen an CMOS koppeln (Quick Boot kürzt Memory-Test, Floppy Seek hörbar/animiert, Setup-Prompt ein/aus)
-    status: pending
+    status: completed
   - id: standard-cmos
     content: STANDARD CMOS SETUP mit Datum/Zeit und Laufwerken aus machine; IDE HDD AUTO DETECTION steuert hddPresent
-    status: pending
+    status: completed
   - id: more-pages
     content: Power Management, PnP/PCI, Chipset, Integrated Peripherals, Passwort-Dialoge, Load Defaults, Save/Exit-Confirm
-    status: pending
+    status: completed
   - id: easter-eggs
     content: Zurückhaltende Easter Eggs (Welcome-Dialog, OEM-Passwort, Virus-Warning-Text, seltener CMOS Checksum)
-    status: pending
+    status: completed
   - id: wire
     content: settings.cmos persistieren, App.tsx-Phasen, ScanDisk belassen, Typecheck und Browser-Test aller Boot-Pfade
-    status: pending
+    status: completed
 isProject: false
 ---
 
@@ -258,3 +258,7 @@ Defaults so wählen, dass **Erstbesucher ohne DEL** denselben Weg wie heute sehe
 4. IDE Auto Detection → None → Failure; Load Setup Defaults → wieder bootfähig.
 5. In BIOS FEATURES First=`USB-HDD` setzen → SAVE → Zustimmungsdialog → Enter → Directory-Picker (Chromium/HTTPS); Abbruch → `bootfail`. Stick mit z. B. `doom19s.zip` → js-dos; mit `BootChess.img` → v86-Pfad oder kontrollierte Ablehnung. Firefox/Safari-Fallback; iOS ohne USB-Punkt.
 6. ScanDisk, EXIT WITHOUT SAVING, Escape-Skip auf normalen Phasen regressen; Escape auf `bootfail` blockiert.
+
+## Umsetzungshinweise
+- CMOS liegt nicht in `settings.cmos`, sondern in einem eigenen Store `sa85-cmos` ([src/boot/cmos.ts](src/boot/cmos.ts)) mit 16-Bit-Prüfsumme; so bleibt `settings.ts` (Systemsteuerung) unberührt und ein abgebrochener Schreibvorgang führt glaubwürdig zu `CMOS checksum error - Defaults loaded`.
+- USB-Inhalte: `.jsdos`/ZIP/Programmordner → js-dos (`/dos/index.html?mode=usb`), `img`/`ima`/`flp`/`iso` sowie ZIP mit genau einem Image → v86 mit SeaBIOS (LGPL, `public/firmware`). `.7z` wird nicht entpackt.
