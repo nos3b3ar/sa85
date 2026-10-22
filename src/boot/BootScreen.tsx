@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { playFloppySeek, playKeyPress, playPostBeep } from '../audio/audio';
+import { playFloppySeek, playKeyPress } from '../audio/audio';
 import { BoardLogo } from './BoardLogo';
 import { bootScript, formatMemory, machine } from './bootScript';
 import { floppyPresent, getCmos, primaryMasterName, type BootDevice } from './cmos';
@@ -151,7 +151,6 @@ export function BootScreen({ checksumError, usbAvailable, onDone, onSetup }: Boo
         append(formatMemory(0, false));
         await animateMemory(quick ? bootScript.quickMemoryDurationMs : bootScript.memoryDurationMs);
         replaceLast(formatMemory(machine.totalMemoryK, true));
-        playPostBeep();
         selfTestDone = true;
         if (setupRequested) {
           await wait(400, signal);

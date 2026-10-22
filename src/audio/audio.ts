@@ -237,11 +237,6 @@ function speakerBeep(duration: number, baseVolume: number, delay = 0) {
   oscillator.stop(start + duration + 0.01);
 }
 
-/** Ein kurzer Piep nach bestandenem Speichertest. */
-export function playPostBeep() {
-  speakerBeep(0.14, 0.05);
-}
-
 export function playDiskBootFailureBeep() {
   speakerBeep(0.75, 0.06);
 }

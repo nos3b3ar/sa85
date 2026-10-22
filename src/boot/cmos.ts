@@ -43,7 +43,7 @@ export const setupDefaults: Record<string, string> = {
   secondBoot: 'CDROM',
   thirdBoot: 'Floppy',
   swapFloppy: 'Disabled',
-  floppySeek: 'Enabled',
+  floppySeek: 'Disabled',
   numLock: 'On',
   gateA20: 'Fast',
   typematic: 'Disabled',
