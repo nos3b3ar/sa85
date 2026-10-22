@@ -1,0 +1,409 @@
+/* Award-Setup-Unterseiten, Dialoge und Boot-Pfade. Ergänzt die .setup-/.bios-Grundstile aus index.css. */
+
+.setup-screen {
+  --setup-bg: #0000aa;
+  --setup-fg: #ffffff;
+  --setup-title: #ffff55;
+  --setup-mark-bg: #ffff55;
+  --setup-mark-fg: #0000aa;
+  --setup-dim: #7f7fd5;
+  background: var(--setup-bg);
+  color: var(--setup-fg);
+}
+
+.setup-screen.setup-color-1 {
+  --setup-bg: #000000;
+  --setup-fg: #aaaaaa;
+  --setup-title: #ffffff;
+  --setup-mark-bg: #aaaaaa;
+  --setup-mark-fg: #000000;
+  --setup-dim: #555555;
+}
+
+.setup-screen.setup-color-2 {
+  --setup-bg: #00aaaa;
+  --setup-fg: #000000;
+  --setup-title: #ffffff;
+  --setup-mark-bg: #0000aa;
+  --setup-mark-fg: #ffffff;
+  --setup-dim: #005f5f;
+}
+
+.setup-screen.setup-color-3 {
+  --setup-bg: #aaaaaa;
+  --setup-fg: #000000;
+  --setup-title: #0000aa;
+  --setup-mark-bg: #000000;
+  --setup-mark-fg: #aaaaaa;
+  --setup-dim: #666666;
+}
+
+.setup-screen.is-oem {
+  --setup-bg: #000000;
+  --setup-fg: #aaaaaa;
+  --setup-title: #ffffff;
+  --setup-mark-bg: #aaaaaa;
+  --setup-mark-fg: #000000;
+}
+
+.setup-screen .setup-title {
+  color: var(--setup-title);
+}
+
+.setup-screen .setup-item.is-selected {
+  background: var(--setup-mark-bg);
+  color: var(--setup-mark-fg);
+}
+
+.setup-page {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: center;
+  gap: 0 4ch;
+  overflow: auto;
+  line-height: 1.22;
+}
+
+.setup-page.is-single {
+  grid-template-columns: max-content;
+  align-content: start;
+}
+
+.setup-page-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.setup-page-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4ch;
+  margin-top: 1.2em;
+}
+
+.setup-row {
+  white-space: pre;
+}
+
+.setup-row.is-disabled {
+  color: var(--setup-dim);
+}
+
+.setup-value {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  white-space: pre;
+  cursor: pointer;
+}
+
+.setup-value:disabled {
+  cursor: default;
+}
+
+.setup-value.is-selected {
+  background: var(--setup-mark-bg);
+  color: var(--setup-mark-fg);
+}
+
+.setup-legend {
+  margin-top: auto;
+  padding: 0.2em 1ch;
+  border: 3px double currentColor;
+  white-space: pre;
+}
+
+.setup-aside {
+  padding: 0.2em 1ch;
+  border: 3px double currentColor;
+}
+
+.setup-main-footer {
+  flex-direction: column;
+  gap: 0.2em;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  border: 3px double currentColor;
+  padding: 0.3em 1ch;
+}
+
+.setup-footer-keys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 4ch;
+}
+
+.setup-footer-help {
+  border-top: 1px solid currentColor;
+  padding-top: 0.2em;
+  text-align: center;
+  color: var(--setup-fg);
+}
+
+.setup-key {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+}
+
+.setup-touch-keys,
+.bios-box-actions.is-touch {
+  display: none;
+}
+
+.setup-oem-note {
+  text-align: center;
+  padding-top: 0.6em;
+}
+
+.bios-box {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  min-width: min(34ch, calc(100vw - 32px));
+  max-width: min(64ch, calc(100vw - 32px));
+  background: #0000aa;
+  color: #ffffff;
+  border: 3px double #ffffff;
+  box-shadow: 1ch 0.5em 0 #000000;
+  padding: 0.6em 2ch;
+  font-family: "IBM VGA 8x16", "Courier New", monospace;
+  white-space: normal;
+}
+
+.bios-box p {
+  margin: 0;
+}
+
+.bios-box p + p {
+  margin-top: 0.5em;
+}
+
+.bios-box-title {
+  margin: -1.25em auto 0.5em;
+  width: max-content;
+  max-width: 100%;
+  background: #0000aa;
+  color: #ffff55;
+  white-space: pre;
+}
+
+.bios-box-note {
+  color: #aaaaaa;
+}
+
+.bios-box-actions {
+  display: flex;
+  justify-content: center;
+  gap: 4ch;
+  margin-top: 0.8em;
+}
+
+.bios-box .setup-value.is-selected {
+  background: #ffff55;
+  color: #0000aa;
+}
+
+.setup-confirm {
+  background: #aa0000;
+  white-space: pre;
+}
+
+.setup-confirm .setup-value.is-selected {
+  background: transparent;
+  color: #ffffff;
+}
+
+.password-line {
+  margin: 0;
+  white-space: pre;
+}
+
+.password-system {
+  padding-top: 2em;
+}
+
+.ide-detect {
+  flex: 1;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: auto;
+  line-height: 1.25;
+}
+
+.ide-option {
+  display: block;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ide-option:hover {
+  background: var(--setup-mark-bg);
+  color: var(--setup-mark-fg);
+}
+
+.ide-footer {
+  margin-top: 1em;
+  color: var(--setup-title);
+}
+
+.boot-menu {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: pre;
+  background: #000000;
+  color: #aaaaaa;
+}
+
+.boot-menu-item.is-selected {
+  color: #ffffff;
+  text-shadow: 0 0 0 #ffffff;
+  background: linear-gradient(to right, transparent 2ch, #555555 2ch, #555555 calc(100% - 2ch), transparent calc(100% - 2ch));
+}
+
+.bootfail {
+  cursor: default;
+}
+
+.virus-warning {
+  white-space: pre;
+  padding-top: 1.2em;
+}
+
+.virus-key {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.usb-boot {
+  position: relative;
+  height: 100%;
+}
+
+.usb-candidate {
+  display: block;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  white-space: pre;
+  text-align: left;
+  cursor: pointer;
+}
+
+.usb-candidate.is-selected {
+  background: #7fdfff;
+  color: #000000;
+}
+
+.usb-run {
+  position: relative;
+  height: 100%;
+  background: #000000;
+}
+
+.usb-reset {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 5;
+  font: 12px "IBM VGA 8x16", "Courier New", monospace;
+  color: #6f6f6f;
+  background: #111111;
+  border: 1px solid #333333;
+  padding: 2px 6px;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.usb-reset:hover,
+.usb-reset:focus-visible {
+  opacity: 1;
+  color: #c0c0c0;
+}
+
+.v86-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.v86-screen {
+  transform-origin: center;
+}
+
+.v86-text {
+  white-space: pre;
+  font: 16px/16px "IBM VGA 8x16", "Courier New", monospace;
+  color: #aaaaaa;
+}
+
+.v86-canvas {
+  display: none;
+  image-rendering: pixelated;
+}
+
+@media (pointer: coarse) {
+  .setup-touch-keys {
+    display: flex;
+    justify-content: center;
+    gap: 4ch;
+    padding-top: 0.6em;
+  }
+
+  .bios-box-actions.is-touch {
+    display: flex;
+  }
+}
+
+@media (max-width: 720px) {
+  .setup-page {
+    grid-template-columns: 1fr;
+    justify-content: start;
+    font-size: 12px;
+    overflow-x: auto;
+  }
+
+  .setup-page-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .setup-footer-keys {
+    grid-template-columns: 1fr;
+  }
+
+  .ide-detect {
+    font-size: 11px;
+  }
+}
