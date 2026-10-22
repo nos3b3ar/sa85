@@ -39,7 +39,8 @@
     }
   }
 
-  var skip = /^(setup|install|instal|config|setsound|uninst|readme)/i;
+  var skip = /^(setup|install|instal|config|setsound|uninst|readme|deice|catalog|dealers|order|vendor|register|help)/i;
+  var installer = /^(install|instal|setup)\.(exe|com|bat)$/i;
 
   function zipEntries(bytes) {
     var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -68,6 +69,10 @@
       var file = path.split('/').pop();
       return /\.(exe|com|bat)$/i.test(file) && !skip.test(file);
     });
+    // Shareware-Archive wie doom19s.zip enthalten nur den Installer; dann startet der.
+    if (!programs.length) {
+      programs = names.filter(function (path) { return installer.test(path.split('/').pop()); });
+    }
     var shallowest = Math.min.apply(null, programs.map(function (path) { return path.split('/').length; }));
     var top = programs.filter(function (path) { return path.split('/').length === shallowest; });
     var lines = [];
