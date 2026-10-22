@@ -213,8 +213,7 @@ export const desktopApps: DesktopApp[] = [
     showOnDesktop: false,
     kind: 'window',
     component: lazyNamed(() => import('./AssistantApp'), 'AssistantApp'),
-    defaultSize: { width: 472, height: 356 },
-    sizing: 'content',
+    defaultSize: { width: 472, height: 390 },
   },
   {
     id: 'impressum',

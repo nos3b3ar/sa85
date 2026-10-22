@@ -33,7 +33,7 @@ export function Desktop(props: DesktopProps) {
 function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProps) {
   const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
   const openedInitial = useRef(false);
-  const openedWizard = useRef(false);
+  const bgPressRef = useRef<{ x: number; y: number; timer: number } | null>(null);
   const settings = useSettings();
   const [selected, setSelected] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -74,13 +74,6 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
     openApp(initialApp);
     onInitialAppOpened?.();
   }, [initialApp, onInitialAppOpened, openApp]);
-
-  // Einrichtungs-Wizard des Office-Assistenten beim ersten Besuch öffnen
-  useEffect(() => {
-    if (openedWizard.current || initialApp || settings.assistantSetupDone) return;
-    openedWizard.current = true;
-    openApp('assistant');
-  }, [initialApp, openApp, settings.assistantSetupDone]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -125,6 +118,13 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
     setMenuOpen(false);
   };
 
+  const clearBgPress = () => {
+    if (bgPressRef.current) {
+      window.clearTimeout(bgPressRef.current.timer);
+      bgPressRef.current = null;
+    }
+  };
+
   return (
     <div
       className="desktop"
@@ -134,6 +134,41 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
         if (!leftHanded || event.button !== 0 || !onBackground(event.target)) return;
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
+      onPointerDown={(event) => {
+        if (!(event.target as HTMLElement).closest('.context-menu')) setContextMenu(null);
+        if (!onBackground(event.target)) return;
+        setSelected(null);
+        setMenuOpen(false);
+        if (event.pointerType === 'mouse') return;
+        clearBgPress();
+        const x = event.clientX;
+        const y = event.clientY;
+        const timer = window.setTimeout(() => {
+          bgPressRef.current = null;
+          setContextMenu({
+            x: Math.max(8, Math.min(x, window.innerWidth - 180)),
+            y: Math.max(8, Math.min(y, window.innerHeight - 140)),
+          });
+        }, 460);
+        bgPressRef.current = { x, y, timer };
+      }}
+      onPointerMove={(event) => {
+        const press = bgPressRef.current;
+        if (!press) return;
+        if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10) {
+          clearBgPress();
+          return;
+        }
+        if (event.pointerType !== 'mouse' && event.pressure >= 0.65 && event.pressure < 1) {
+          clearBgPress();
+          setContextMenu({
+            x: Math.max(8, Math.min(event.clientX, window.innerWidth - 180)),
+            y: Math.max(8, Math.min(event.clientY, window.innerHeight - 140)),
+          });
+        }
+      }}
+      onPointerUp={clearBgPress}
+      onPointerCancel={clearBgPress}
       onContextMenu={(event) => {
         if (!onBackground(event.target)) return;
         event.preventDefault();

@@ -117,6 +117,13 @@ export function MinesweeperApp({ onClose }: AppProps) {
                   if (event.button !== 0) return;
                   setPressing(true);
                   if (event.pointerType !== 'mouse') {
+                    // Fester Druck (Force Touch / 3D Touch) setzt sofort eine Flagge
+                    if (event.pressure >= 0.65 && event.pressure < 1) {
+                      setPressing(false);
+                      mark(index);
+                      longPress.current = { fired: true, timer: 0 };
+                      return;
+                    }
                     const state = { fired: false, timer: 0 };
                     state.timer = window.setTimeout(() => {
                       state.fired = true;
@@ -124,6 +131,16 @@ export function MinesweeperApp({ onClose }: AppProps) {
                       mark(index);
                     }, longPressMs);
                     longPress.current = state;
+                  }
+                }}
+                onPointerMove={(event) => {
+                  const press = longPress.current;
+                  if (!press || press.fired || event.pointerType === 'mouse') return;
+                  if (event.pressure >= 0.65 && event.pressure < 1) {
+                    window.clearTimeout(press.timer);
+                    press.fired = true;
+                    setPressing(false);
+                    mark(index);
                   }
                 }}
                 onPointerUp={(event) => {

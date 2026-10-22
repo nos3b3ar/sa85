@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { Cmos } from '../cmos';
 import type { Field, SetupPage } from './pages';
 
@@ -69,22 +70,19 @@ export function SetupPageView({ page, cmos, cursor, tick, onSelect, onModify }: 
     return (
       <div key={field.id} className={selectable ? 'setup-row' : 'setup-row is-disabled'}>
         {`${field.label.padEnd(width)} : `}
-        <button
-          type="button"
-          className={selected ? 'setup-value is-selected' : 'setup-value'}
-          disabled={!selectable}
-          onClick={() => {
+        <SetupValueButton
+          selected={selected}
+          selectable={selectable}
+          value={value}
+          onPrimary={() => {
             if (selected) onModify({ column, row }, 1);
             else onSelect({ column, row });
           }}
-          onContextMenu={(event) => {
-            event.preventDefault();
+          onSecondary={() => {
             onSelect({ column, row });
             onModify({ column, row }, -1);
           }}
-        >
-          {value}
-        </button>
+        />
         {suffix ?? null}
       </div>
     );
@@ -116,5 +114,71 @@ export function SetupPageView({ page, cmos, cursor, tick, onSelect, onModify }: 
         {page.id === 'oem' ? null : legendBlock}
       </div>
     </div>
+  );
+}
+
+function SetupValueButton({
+  selected,
+  selectable,
+  value,
+  onPrimary,
+  onSecondary,
+}: {
+  selected: boolean;
+  selectable: boolean;
+  value: string;
+  onPrimary: () => void;
+  onSecondary: () => void;
+}) {
+  const pressRef = useRef<{ timer: number; fired: boolean } | null>(null);
+  const clear = () => {
+    if (pressRef.current) window.clearTimeout(pressRef.current.timer);
+    pressRef.current = null;
+  };
+  return (
+    <button
+      type="button"
+      className={selected ? 'setup-value is-selected' : 'setup-value'}
+      disabled={!selectable}
+      onPointerDown={(event) => {
+        if (event.pointerType === 'mouse') return;
+        clear();
+        if (event.pressure >= 0.65 && event.pressure < 1) {
+          pressRef.current = { timer: 0, fired: true };
+          onSecondary();
+          return;
+        }
+        const state = { timer: 0, fired: false };
+        state.timer = window.setTimeout(() => {
+          state.fired = true;
+          onSecondary();
+        }, 440);
+        pressRef.current = state;
+      }}
+      onPointerMove={(event) => {
+        const press = pressRef.current;
+        if (!press || press.fired || event.pointerType === 'mouse') return;
+        if (event.pressure >= 0.65 && event.pressure < 1) {
+          window.clearTimeout(press.timer);
+          press.fired = true;
+          onSecondary();
+        }
+      }}
+      onPointerUp={clear}
+      onPointerCancel={clear}
+      onClick={() => {
+        if (pressRef.current?.fired) {
+          pressRef.current = null;
+          return;
+        }
+        onPrimary();
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onSecondary();
+      }}
+    >
+      {value}
+    </button>
   );
 }

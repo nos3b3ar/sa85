@@ -20,12 +20,72 @@
     color: #c0c0c0; font: 16px/1.2 "Courier New", monospace;
   }
   #starting[hidden] { display: none; }
+  /* Verstecktes Eingabefeld für die native Smartphone-Tastatur */
+  #mobile-kbd {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    outline: none;
+    background: transparent;
+    color: transparent;
+    caret-color: transparent;
+    font-size: 16px;
+    resize: none;
+    pointer-events: none;
+    z-index: -1;
+  }
+  #kbd-toggle {
+    display: none;
+    position: fixed;
+    right: 12px;
+    top: 12px;
+    z-index: 30;
+    padding: 5px 10px;
+    font: 700 13px/1 "Courier New", monospace;
+    color: #fff;
+    background: rgba(0, 0, 170, 0.85);
+    border: 2px solid #c0c0c0;
+    box-shadow: 2px 2px 0 #000;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  #kbd-toggle.is-active {
+    background: rgba(0, 128, 128, 0.92);
+    border-color: #ffff55;
+    color: #ffff55;
+  }
+  body.has-kbd-toggle #kbd-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
 </style>
 </head>
 <body>
 <div id="dos"></div>
 <div id="starting" hidden>MS-DOS wird gestartet...</div>
 <div id="drop">Datei loslassen, um sie in MS DOS zu laden</div>
+<textarea
+  id="mobile-kbd"
+  autocapitalize="off"
+  autocomplete="off"
+  autocorrect="off"
+  spellcheck="false"
+  inputmode="text"
+  enterkeyhint="enter"
+  aria-label="DOS-Tastatur"
+></textarea>
+<button type="button" id="kbd-toggle" aria-pressed="false" title="Tastatur ein-/ausklappen">
+  ⌨ <span id="kbd-toggle-label">Tastatur</span>
+</button>
 <script src="/js-dos/js-dos.js"></script>
 <script>
 (function () {
@@ -322,7 +382,232 @@
       bootDosMode(e.data.games || [], e.data.version);
     }
     if (e.data.action === 'pause' && current && current.setPaused) current.setPaused(!!e.data.value);
+    if (e.data.action === 'keyboard') {
+      if (e.data.open === true) openNativeKeyboard();
+      else if (e.data.open === false) closeNativeKeyboard();
+      else toggleNativeKeyboard();
+    }
   });
+
+  // Native Smartphone-Tastatur an DOSBox anbinden
+  var mobileInput = document.getElementById('mobile-kbd');
+  var kbdToggleBtn = document.getElementById('kbd-toggle');
+  var kbdOpen = false;
+  var sentinel = ' ';
+  var line = '';
+
+  var isCoarse = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+    || ('ontouchstart' in window)
+    || (navigator.maxTouchPoints > 0);
+  if (isCoarse && (dosMode || usbMode)) {
+    document.body.classList.add('has-kbd-toggle');
+  }
+
+  function recordLineKey(key) {
+    if (!dosMode && !usbMode) return;
+    if (key === 'Enter') {
+      if (/(exit|\bwin)\s*$/i.test(line)) notify('exit');
+      line = '';
+    } else if (key === 'Backspace') {
+      line = line.slice(0, -1);
+    } else if (key === 'Escape') {
+      line = '';
+    } else if (key && key.length === 1) {
+      line += key;
+    }
+  }
+
+  function resetMobileInput() {
+    if (!mobileInput) return;
+    mobileInput.value = sentinel;
+    try {
+      mobileInput.setSelectionRange(sentinel.length, sentinel.length);
+    } catch (err) {
+      // Ignorieren, falls nicht fokussiert.
+    }
+  }
+
+  function setKeyboardState(open) {
+    kbdOpen = !!open;
+    if (kbdToggleBtn) {
+      kbdToggleBtn.classList.toggle('is-active', kbdOpen);
+      kbdToggleBtn.setAttribute('aria-pressed', kbdOpen ? 'true' : 'false');
+    }
+    notify('keyboard', { open: kbdOpen });
+  }
+
+  function openNativeKeyboard() {
+    if (!mobileInput) return;
+    resetMobileInput();
+    mobileInput.focus({ preventScroll: true });
+    setKeyboardState(true);
+  }
+
+  function closeNativeKeyboard() {
+    if (!mobileInput) return;
+    mobileInput.blur();
+    setKeyboardState(false);
+  }
+
+  function toggleNativeKeyboard() {
+    if (kbdOpen && document.activeElement === mobileInput) {
+      closeNativeKeyboard();
+    } else {
+      openNativeKeyboard();
+    }
+  }
+
+  if (kbdToggleBtn) {
+    kbdToggleBtn.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNativeKeyboard();
+    });
+  }
+
+  // Tippen auf die DOS-Fläche öffnet auf Touch-Geräten die native Tastatur
+  container.addEventListener('touchend', function (e) {
+    if (e.target === kbdToggleBtn || (kbdToggleBtn && kbdToggleBtn.contains(e.target))) return;
+    if (!kbdOpen) {
+      openNativeKeyboard();
+    }
+  }, { passive: true });
+
+  var charSpecTable = {
+    ':': { keyCode: 186, shift: true },
+    ';': { keyCode: 186, shift: false },
+    '=': { keyCode: 187, shift: false },
+    '+': { keyCode: 187, shift: true },
+    ',': { keyCode: 188, shift: false },
+    '<': { keyCode: 188, shift: true },
+    '-': { keyCode: 189, shift: false },
+    '_': { keyCode: 189, shift: true },
+    '.': { keyCode: 190, shift: false },
+    '>': { keyCode: 190, shift: true },
+    '/': { keyCode: 191, shift: false },
+    '?': { keyCode: 191, shift: true },
+    '`': { keyCode: 192, shift: false },
+    '~': { keyCode: 192, shift: true },
+    '[': { keyCode: 219, shift: false },
+    '{': { keyCode: 219, shift: true },
+    '\\': { keyCode: 220, shift: false },
+    '|': { keyCode: 220, shift: true },
+    ']': { keyCode: 221, shift: false },
+    '}': { keyCode: 221, shift: true },
+    '\'': { keyCode: 222, shift: false },
+    '"': { keyCode: 222, shift: true },
+    '!': { keyCode: 49, shift: true },
+    '@': { keyCode: 50, shift: true },
+    '#': { keyCode: 51, shift: true },
+    '$': { keyCode: 52, shift: true },
+    '%': { keyCode: 53, shift: true },
+    '^': { keyCode: 54, shift: true },
+    '&': { keyCode: 55, shift: true },
+    '*': { keyCode: 56, shift: true },
+    '(': { keyCode: 57, shift: true },
+    ')': { keyCode: 48, shift: true },
+    ' ': { keyCode: 32, shift: false },
+  };
+
+  function dispatchSyntheticKey(type, keyCode, key) {
+    var ev = new KeyboardEvent(type, {
+      key: key || '',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(ev, 'keyCode', { get: function () { return keyCode; } });
+    Object.defineProperty(ev, 'which', { get: function () { return keyCode; } });
+    Object.defineProperty(ev, 'location', { get: function () { return 0; } });
+    window.dispatchEvent(ev);
+  }
+
+  function pressKeyCode(keyCode, key, shift) {
+    if (shift) dispatchSyntheticKey('keydown', 16, 'Shift');
+    dispatchSyntheticKey('keydown', keyCode, key);
+    setTimeout(function () {
+      dispatchSyntheticKey('keyup', keyCode, key);
+      if (shift) dispatchSyntheticKey('keyup', 16, 'Shift');
+    }, 28);
+  }
+
+  function sendCharToDos(ch) {
+    if (ch === '\n' || ch === '\r') {
+      recordLineKey('Enter');
+      pressKeyCode(13, 'Enter', false);
+      return;
+    }
+    recordLineKey(ch);
+    if (ch >= 'a' && ch <= 'z') {
+      pressKeyCode(ch.toUpperCase().charCodeAt(0), ch, false);
+      return;
+    }
+    if (ch >= 'A' && ch <= 'Z') {
+      pressKeyCode(ch.charCodeAt(0), ch, true);
+      return;
+    }
+    if (ch >= '0' && ch <= '9') {
+      pressKeyCode(ch.charCodeAt(0), ch, false);
+      return;
+    }
+    var spec = charSpecTable[ch];
+    if (spec) {
+      pressKeyCode(spec.keyCode, ch, spec.shift);
+    }
+  }
+
+  if (mobileInput) {
+    mobileInput.addEventListener('focus', function () {
+      resetMobileInput();
+      setKeyboardState(true);
+    });
+    mobileInput.addEventListener('blur', function () {
+      setKeyboardState(false);
+    });
+    mobileInput.addEventListener('keydown', function (e) {
+      // Wenn die Software-Tastatur ein unkomponiertes(229) Event sendet, übernimmt das input-Event
+      if (e.keyCode === 229 || e.which === 229) {
+        e.stopPropagation();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        recordLineKey('Enter');
+        pressKeyCode(13, 'Enter', false);
+        resetMobileInput();
+        return;
+      }
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        e.stopPropagation();
+        recordLineKey('Backspace');
+        pressKeyCode(8, 'Backspace', false);
+        resetMobileInput();
+        return;
+      }
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Normale Zeichen lassen wir durch das input-Event verarbeiten, damit es keine Dopplung gibt
+        e.stopPropagation();
+      }
+    });
+    mobileInput.addEventListener('input', function () {
+      var val = mobileInput.value;
+      if (val === sentinel) return;
+      if (val.length < sentinel.length) {
+        var deletedCount = sentinel.length - val.length;
+        for (var d = 0; d < deletedCount; d++) {
+          recordLineKey('Backspace');
+          pressKeyCode(8, 'Backspace', false);
+        }
+      } else {
+        var added = val.startsWith(sentinel) ? val.slice(sentinel.length) : val;
+        for (var i = 0; i < added.length; i++) {
+          sendCharToDos(added[i]);
+        }
+      }
+      resetMobileInput();
+    });
+  }
 
   var depth = 0;
   function hasFiles(e) {
@@ -355,18 +640,10 @@
   // DOSBox meldet Shell-Befehle nicht nach außen, daher wird die getippte Zeile mitgelesen.
   // Spiele lassen Tastendrücke ohne Enter zurück (etwa „y“ beim Beenden), deshalb zählt nur das Zeilenende.
   if (dosMode || usbMode) {
-    var line = '';
     window.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        if (/(exit|\bwin)\s*$/i.test(line)) notify('exit');
-        line = '';
-      } else if (e.key === 'Backspace') {
-        line = line.slice(0, -1);
-      } else if (e.key === 'Escape') {
-        line = '';
-      } else if (e.key.length === 1) {
-        line += e.key;
-      }
+      if (e.target === mobileInput) return;
+      if (!e.isTrusted) return;
+      recordLineKey(e.key);
     }, true);
   }
 

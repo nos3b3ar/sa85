@@ -3193,28 +3193,36 @@ body {
 
 .app-window.is-fixed .app-window-header {
   contain: inline-size;
-  gap: 2px;
-  padding-right: 2px;
-  font-size: 12px;
+  gap: 4px;
 }
 
-.app-window.is-fixed .app-window-title {
-  gap: 3px;
-}
-
-.app-window.is-fixed .app-window-title svg {
+.app-window.is-fixed .app-window-title svg,
+.app-window.is-fixed .app-window-title img {
   flex: none;
 }
 
-.app-window.is-fixed .app-window-controls button {
-  width: 16px;
-  min-width: 0;
-  height: 14px;
-  padding: 0;
-}
+@container (max-width: 220px) {
+  .app-window.is-fixed .app-window-header {
+    gap: 2px;
+    padding-right: 2px;
+    font-size: 12px;
+  }
 
-.app-window.is-fixed .app-window-controls button > span {
-  transform: scale(0.7);
+  .app-window.is-fixed .app-window-title {
+    gap: 3px;
+  }
+
+  .app-window.is-fixed .app-window-controls button {
+    width: 16px;
+    min-width: 0;
+    height: 14px;
+    padding: 0;
+  }
+
+  .app-window.is-fixed .app-window-controls button > span {
+    width: 9px;
+    height: 9px;
+  }
 }
 
 .window-loading {
@@ -3248,81 +3256,34 @@ body {
   color: #000;
 }
 
+/* Win98 caption glyphs on their original 9×9 pixel grid, drawn at 2× */
 .title-close,
-.title-min {
+.title-min,
+.title-max,
+.title-restore {
   display: inline-block;
-  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask: var(--glyph) center / 100% 100% no-repeat;
+  mask: var(--glyph) center / 100% 100% no-repeat;
 }
 
 .title-close {
-  width: 11px;
-  height: 11px;
-}
-
-.title-close::before,
-.title-close::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  background: #000;
-}
-
-.title-close::before {
-  width: 2px;
-  height: 11px;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.title-close::after {
-  width: 11px;
-  height: 2px;
-  transform: translate(-50%, -50%) rotate(45deg);
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h4v1H3zM4 4h2v1H4zM3 5h4v1H3zM2 6h2v1H2zM6 6h2v1H6zM1 7h2v1H1zM7 7h2v1H7z'/%3E%3C/svg%3E");
 }
 
 .title-min {
-  width: 10px;
-  height: 2px;
-  background: #000;
-  margin-top: 5px;
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M1 7h6v2H1z'/%3E%3C/svg%3E");
 }
 
 .title-max {
-  display: inline-block;
-  width: 11px;
-  height: 10px;
-  box-sizing: border-box;
-  border: 1px solid #000;
-  border-top-width: 2px;
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h9v2H0zM0 2h1v7H0zM8 2h1v7H8zM1 8h7v1H1z'/%3E%3C/svg%3E");
 }
 
 .title-restore {
-  display: inline-block;
-  position: relative;
-  width: 11px;
-  height: 11px;
-}
-
-.title-restore::before,
-.title-restore::after {
-  content: "";
-  position: absolute;
-  width: 8px;
-  height: 7px;
-  box-sizing: border-box;
-  border: 1px solid #000;
-  border-top-width: 2px;
-  background: #c6c6c6;
-}
-
-.title-restore::before {
-  right: 0;
-  top: 0;
-}
-
-.title-restore::after {
-  left: 0;
-  bottom: 0;
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h6v2H3zM3 2h1v1H3zM8 2h1v4H8zM6 5h2v1H6zM0 3h6v2H0zM0 5h1v4H0zM5 5h1v4H5zM1 8h4v1H1z'/%3E%3C/svg%3E");
 }
 
 .app-window.is-maximized {
@@ -4137,6 +4098,7 @@ body {
 
 .dos-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 2px 2px 4px;
@@ -4187,12 +4149,11 @@ body {
 
 /* Office-Assistent (Einrichtungs-Wizard & Desktop-Figur) */
 .assistant-dialog {
-  width: min(468px, calc(100vw - 28px));
   user-select: none;
 }
 
 .assistant-tab-body {
-  min-height: 236px;
+  min-height: 220px;
 }
 
 .assistant-gallery {

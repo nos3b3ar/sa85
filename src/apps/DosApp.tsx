@@ -4,7 +4,12 @@ import { Button, MenuList, MenuListItem, Window, WindowContent, WindowHeader } f
 import { dosGames, type DosGame } from '../content/dosGames';
 import type { AppProps } from './types';
 
-type DosMessage = { type: 'sa85-dos'; event: 'started' | 'rejected'; name?: string | null };
+type DosMessage = {
+  type: 'sa85-dos';
+  event: 'started' | 'rejected' | 'keyboard';
+  name?: string | null;
+  open?: boolean;
+};
 
 const storageKeyPrefix = 'jsdos.';
 
@@ -59,6 +64,7 @@ export function DosApp({ onClose, setCloseGuard }: AppProps) {
   const [note, setNote] = useState<string | null>(null);
   const [closePrompt, setClosePrompt] = useState<number | null>(null);
   const [gamesOpen, setGamesOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const gamesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +76,7 @@ export function DosApp({ onClose, setCloseGuard }: AppProps) {
         frameRef.current?.focus();
       }
       if (event.data.event === 'rejected') setNote(`${event.data.name} ist keine .zip- oder .jsdos-Datei.`);
+      if (event.data.event === 'keyboard') setKeyboardOpen(Boolean(event.data.open));
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -143,6 +150,14 @@ export function DosApp({ onClose, setCloseGuard }: AppProps) {
         <Button size="sm" onClick={() => fileRef.current?.click()}>Programm öffnen...</Button>
         <Button size="sm" onClick={() => send({ action: 'reset' })}>Neustart</Button>
         <Button size="sm" onClick={() => void frameRef.current?.requestFullscreen?.()}>Vollbild</Button>
+        <Button
+          size="sm"
+          active={keyboardOpen}
+          title="Bildschirmtastatur ein- oder ausklappen"
+          onClick={() => send({ action: 'keyboard', open: !keyboardOpen })}
+        >
+          ⌨ Tastatur
+        </Button>
         <Button size="sm" onClick={() => void clear()}>Cache leeren</Button>
         <span className="dos-status">
           {note ?? (program ? `C:\\ = ${program}` : '.zip oder .jsdos hierher ziehen')}

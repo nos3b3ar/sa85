@@ -150,7 +150,7 @@ export const defaultSettings: Settings = {
   iconPositions: {},
   assistant: 'merlin',
   assistantEnabled: true,
-  assistantSetupDone: false,
+  assistantSetupDone: true,
   assistantSounds: true,
   assistantTips: true,
   assistantPosition: null,

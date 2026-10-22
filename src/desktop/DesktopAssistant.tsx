@@ -29,6 +29,8 @@ type BubbleState = {
 const spriteBox = { width: 128, height: 128 };
 const margin = 12;
 const taskbarHeight = 44;
+const longPressMs = 460;
+const forcePressThreshold = 0.65;
 
 function defaultPosition() {
   // Oberhalb der beiden Rechts-Symbole (Impressum & Datenschutz) rechts unten platzieren,
@@ -71,7 +73,17 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
     origX: number;
     origY: number;
     moved: boolean;
+    longPressFired: boolean;
+    timer: number;
   } | null>(null);
+
+  const openContextMenuAt = useCallback((clientX: number, clientY: number) => {
+    setAnimSubmenu(false);
+    setContextMenu({
+      x: Math.max(8, Math.min(clientX, window.innerWidth - 210)),
+      y: Math.max(8, Math.min(clientY, window.innerHeight - 190)),
+    });
+  }, []);
 
   // Position bei Fenstergrößenänderung oder Reset anpassen
   useEffect(() => {
@@ -160,7 +172,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
   // Beim ersten Erscheinen auf dem Desktop kurz begrüßen
   const greetedOnMountRef = useRef(false);
   useEffect(() => {
-    if (!settings.assistantSetupDone || !settings.assistantEnabled || greetedOnMountRef.current) return;
+    if (!settings.assistantEnabled || greetedOnMountRef.current) return;
     greetedOnMountRef.current = true;
     const timer = window.setTimeout(() => {
       const boots = profile.welcomeOnBoot;
@@ -168,7 +180,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
       showBubble(chosen, 'speech', 'remark', 9000);
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [settings.assistantSetupDone, settings.assistantEnabled, profile, showBubble]);
+  }, [settings.assistantEnabled, profile, showBubble]);
 
   // Externe Trigger aus dem Einrichtungs-Wizard
   useEffect(() => {
@@ -190,7 +202,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
 
   // Periodisch zufällige Sprüche und subtile Entdecker-Tipps einblenden
   useEffect(() => {
-    if (!settings.assistantSetupDone || !settings.assistantEnabled || paused || hiding) return;
+    if (!settings.assistantEnabled || paused || hiding) return;
     const delay = 26000 + Math.random() * 18000;
     const timer = window.setTimeout(() => {
       if (bubble) return;
@@ -203,7 +215,6 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
     }, delay);
     return () => window.clearTimeout(timer);
   }, [
-    settings.assistantSetupDone,
     settings.assistantEnabled,
     settings.assistantTips,
     paused,
@@ -215,7 +226,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
 
   // Reaktion auf neu geöffnete Fenster
   useEffect(() => {
-    if (!settings.assistantSetupDone || !settings.assistantEnabled || paused || hiding) return;
+    if (!settings.assistantEnabled || paused || hiding) return;
     if (!activeAppId || activeAppId === lastReactedAppRef.current) return;
     lastReactedAppRef.current = activeAppId;
     if (activeAppId === 'assistant') return;
@@ -225,7 +236,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
     if (!bubble || bubble.mode === 'speech') {
       showBubble(reaction, 'speech', 'remark', 8500);
     }
-  }, [activeAppId, settings.assistantSetupDone, settings.assistantEnabled, paused, hiding, profile, bubble, showBubble]);
+  }, [activeAppId, settings.assistantEnabled, paused, hiding, profile, bubble, showBubble]);
 
   // Kontextmenü schließen bei Klick außerhalb
   useEffect(() => {
@@ -241,7 +252,7 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
     return () => document.removeEventListener('mousedown', onDown);
   }, [contextMenu]);
 
-  if (!settings.assistantSetupDone || (!settings.assistantEnabled && !hiding)) {
+  if (!settings.assistantEnabled && !hiding) {
     return null;
   }
 
@@ -342,26 +353,51 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
         role="button"
         tabIndex={0}
         aria-label={`${profile.name} – Office-Assistent`}
-        title={`${profile.name} (Klick für Tipp, Rechtsklick für Menü, Ziehen zum Verschieben)`}
+        title={`${profile.name} (Klick für Tipp, Rechtsklick oder langes Drücken für Menü, Ziehen zum Verschieben)`}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           event.stopPropagation();
-          dragRef.current = {
-            startX: event.clientX,
-            startY: event.clientY,
+          const clientX = event.clientX;
+          const clientY = event.clientY;
+          const state = {
+            startX: clientX,
+            startY: clientY,
             origX: pos.x,
             origY: pos.y,
             moved: false,
+            longPressFired: false,
+            timer: 0,
           };
+          if (event.pointerType !== 'mouse') {
+            state.timer = window.setTimeout(() => {
+              if (state.moved) return;
+              state.longPressFired = true;
+              openContextMenuAt(clientX, clientY);
+            }, longPressMs);
+          }
+          dragRef.current = state;
           event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
           const drag = dragRef.current;
-          if (!drag) return;
+          if (!drag || drag.longPressFired) return;
           const dx = event.clientX - drag.startX;
           const dy = event.clientY - drag.startY;
-          if (!drag.moved && Math.hypot(dx, dy) > 5) {
+          if (!drag.moved && Math.hypot(dx, dy) > 8) {
             drag.moved = true;
+            window.clearTimeout(drag.timer);
+          }
+          // Fester Druck (3D Touch / Force Touch) löst sofort das Rechtsklick-Menü aus
+          if (
+            !drag.moved
+            && event.pointerType !== 'mouse'
+            && event.pressure >= forcePressThreshold
+            && event.pressure < 1
+          ) {
+            window.clearTimeout(drag.timer);
+            drag.longPressFired = true;
+            openContextMenuAt(event.clientX, event.clientY);
+            return;
           }
           if (drag.moved) {
             setPos(clampPosition({ x: drag.origX + dx, y: drag.origY + dy }));
@@ -371,6 +407,8 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
           const drag = dragRef.current;
           dragRef.current = null;
           if (!drag) return;
+          window.clearTimeout(drag.timer);
+          if (drag.longPressFired) return;
           if (drag.moved) {
             const next = clampPosition({
               x: drag.origX + (event.clientX - drag.startX),
@@ -387,14 +425,14 @@ export function DesktopAssistant({ openApp, activeAppId, paused = false }: Deskt
             speakRandomRemark('interactive');
           }
         }}
+        onPointerCancel={() => {
+          if (dragRef.current) window.clearTimeout(dragRef.current.timer);
+          dragRef.current = null;
+        }}
         onContextMenu={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          setAnimSubmenu(false);
-          setContextMenu({
-            x: Math.min(event.clientX, window.innerWidth - 210),
-            y: Math.min(event.clientY, window.innerHeight - 190),
-          });
+          openContextMenuAt(event.clientX, event.clientY);
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
