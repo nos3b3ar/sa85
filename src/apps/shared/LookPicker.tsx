@@ -2,19 +2,11 @@ import { Desktop } from '@react95/icons/Desktop';
 import { Ie } from '@react95/icons/Ie';
 import { Mail } from '@react95/icons/Mail';
 import { GroupBox, Radio } from 'react95';
+import { useT } from '../../i18n';
 import type { Look } from '../../settings/settings';
 import { lookInfo } from '../../styles/themes';
 
-const looks: { id: Look; features: string }[] = [
-  {
-    id: '98',
-    features: 'Farbverlauf in Titelleisten, Schnellstart, Ordner mit Web-Ansicht und Adressleiste.',
-  },
-  {
-    id: '95',
-    features: 'Einfarbige Titelleisten, schlichte Ordner, Taskleiste ohne Schnellstart.',
-  },
-];
+const looks: Look[] = ['98', '95'];
 
 function Screenshot({ look }: { look: Look }) {
   return (
@@ -48,38 +40,41 @@ function Screenshot({ look }: { look: Look }) {
 }
 
 export function LookPicker({ value, onChange, name }: { value: Look; onChange: (look: Look) => void; name: string }) {
+  const t = useT();
   return (
     <div className="stack">
-      <p>Wählen Sie, welche Windows-Version auf diesem Computer ausgeführt werden soll.</p>
-      <GroupBox label="Windows-Version">
+      <p>{t.look.intro}</p>
+      <GroupBox label={t.look.group}>
         <div className="look-options">
-          {looks.map((item) => {
-            const info = lookInfo[item.id];
+          {looks.map((id) => {
+            const info = lookInfo[id];
+            const features = id === '98' ? t.look.features98 : t.look.features95;
             return (
-              <div key={item.id} className="look-option">
+              <div key={id} className="look-option">
                 <button
                   type="button"
-                  className={value === item.id ? 'look-preview is-selected' : 'look-preview'}
+                  className={value === id ? 'look-preview is-selected' : 'look-preview'}
                   tabIndex={-1}
-                  onClick={() => onChange(item.id)}
+                  onClick={() => onChange(id)}
                 >
-                  <Screenshot look={item.id} />
+                  <Screenshot look={id} />
                 </button>
                 <Radio
                   name={name}
-                  value={item.id}
-                  label={`Windows ${item.id}`}
-                  checked={value === item.id}
-                  onChange={() => onChange(item.id)}
+                  value={id}
+                  label={`Windows ${id}`}
+                  checked={value === id}
+                  onChange={() => onChange(id)}
                 />
-                <span className="muted">{info.edition ? `${info.edition}, ` : ''}Version {info.build}</span>
-                <span className="muted">{item.features}</span>
+                <span className="muted">{info.edition ? `${info.edition}, ` : ''}
+                  {t.look.version(info.build)}</span>
+                <span className="muted">{features}</span>
               </div>
             );
           })}
         </div>
       </GroupBox>
-      <p>Startbildschirm und Startklang wechseln beim nächsten Neustart mit.</p>
+      <p>{t.look.restartNote}</p>
     </div>
   );
 }

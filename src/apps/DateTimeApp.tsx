@@ -1,23 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Frame, GroupBox, NumberInput, Select, Tab, TabBody, Tabs, TextInput } from 'react95';
+import { useLocaleTag, useT } from '../i18n';
+import { firstDayOfWeek } from '../i18n/format';
+import { useSettings } from '../settings/settings';
 import { DialogFooter } from './DialogFooter';
 import type { AppProps } from './types';
 
-const months = [
-  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-];
-const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-
 export function DateTimeApp({ onClose }: AppProps) {
   const now = useNow();
+  const t = useT();
+  const tag = useLocaleTag();
+  const { locale } = useSettings();
+  const weekStart = firstDayOfWeek[locale];
+  const months = useMemo(
+    () => Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat(tag, { month: 'long' }).format(new Date(2001, month, 1))),
+    [tag],
+  );
+  const weekdays = useMemo(() => {
+    const format = new Intl.DateTimeFormat(tag, { weekday: 'short' });
+    // 2001-01-01 war ein Montag.
+    return Array.from({ length: 7 }, (_, index) => format.format(new Date(2001, 0, (weekStart === 1 ? 1 : 7) + index)));
+  }, [tag, weekStart]);
   const [tab, setTab] = useState(0);
   const [view, setView] = useState(() => ({ year: now.getFullYear(), month: now.getMonth() }));
   const [picked, setPicked] = useState(() => now.getDate());
   const [autoDst, setAutoDst] = useState(true);
 
   const first = new Date(view.year, view.month, 1);
-  const offset = (first.getDay() + 6) % 7;
+  const offset = weekStart === 1 ? (first.getDay() + 6) % 7 : first.getDay();
   const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
   const isCurrentMonth = view.year === now.getFullYear() && view.month === now.getMonth();
   const cells = Array.from({ length: 42 }, (_, index) => {
@@ -28,13 +38,12 @@ export function DateTimeApp({ onClose }: AppProps) {
   return (
     <div className="props-dialog">
       <Tabs value={tab} onChange={(value) => setTab(value as number)}>
-        <Tab value={0}>Datum &amp; Uhrzeit</Tab>
-        <Tab value={1}>Zeitzone</Tab>
+        {t.datetime.tabs.map((label, index) => <Tab key={label} value={index}>{label}</Tab>)}
       </Tabs>
       <TabBody className="props-body">
         {tab === 0 ? (
           <div className="datetime-grid">
-            <GroupBox label="Datum">
+            <GroupBox label={t.datetime.date}>
               <div className="date-controls">
                 <Select
                   width={120}
@@ -53,8 +62,8 @@ export function DateTimeApp({ onClose }: AppProps) {
               </div>
               <Frame variant="field" className="calendar-frame">
                 <div className="calendar">
-                {weekdays.map((day) => (
-                  <span key={day} className="calendar-head">{day}</span>
+                {weekdays.map((day, index) => (
+                  <span key={index} className="calendar-head">{day}</span>
                 ))}
                 {cells.map((day, index) => (
                   <button
@@ -74,29 +83,29 @@ export function DateTimeApp({ onClose }: AppProps) {
                 </div>
               </Frame>
             </GroupBox>
-            <GroupBox label="Uhrzeit">
-              <AnalogClock date={now} />
+            <GroupBox label={t.datetime.time}>
+              <AnalogClock date={now} tag={tag} />
               <TextInput
                 readOnly
-                value={now.toLocaleTimeString('de-DE')}
+                value={now.toLocaleTimeString(tag)}
                 style={{ textAlign: 'center' }}
                 fullWidth
               />
             </GroupBox>
-            <p className="datetime-zone">Aktuelle Zeitzone: {zoneName(now)}</p>
+            <p className="datetime-zone">{t.datetime.currentZone(zoneName(now, tag) ?? t.datetime.zoneFallback)}</p>
           </div>
         ) : (
           <div className="stack">
             <Select
               width="100%"
-              options={[{ label: '(GMT+01:00) Amsterdam, Berlin, Bern, Rom, Stockholm, Wien', value: 'berlin' }]}
+              options={[{ label: t.datetime.zoneOption, value: 'berlin' }]}
               value="berlin"
             />
             <Frame variant="field" className="world-map">
-              <WorldMap />
+              <WorldMap zoneStripe />
             </Frame>
             <Checkbox
-              label="Uhr automatisch auf Sommer-/Winterzeit umstellen"
+              label={t.datetime.autoDst}
               checked={autoDst}
               onChange={(event) => setAutoDst(event.target.checked)}
             />
@@ -117,14 +126,13 @@ function useNow() {
   return now;
 }
 
-function zoneName(date: Date) {
-  const name = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', timeZoneName: 'long' })
+function zoneName(date: Date, tag: string) {
+  return new Intl.DateTimeFormat(tag, { timeZone: 'Europe/Berlin', timeZoneName: 'long' })
     .formatToParts(date)
     .find((part) => part.type === 'timeZoneName')?.value;
-  return name ?? 'Mitteleuropäische Zeit';
 }
 
-function AnalogClock({ date }: { date: Date }) {
+function AnalogClock({ date, tag }: { date: Date; tag: string }) {
   const seconds = date.getSeconds();
   const minutes = date.getMinutes() + seconds / 60;
   const hours = (date.getHours() % 12) + minutes / 60;
@@ -143,7 +151,7 @@ function AnalogClock({ date }: { date: Date }) {
     );
   };
   return (
-    <svg className="analog-clock" viewBox="0 0 100 100" role="img" aria-label={date.toLocaleTimeString('de-DE')}>
+    <svg className="analog-clock" viewBox="0 0 100 100" role="img" aria-label={date.toLocaleTimeString(tag)}>
       {Array.from({ length: 12 }, (_, index) => {
         const rad = (index * 30 * Math.PI) / 180;
         return (
@@ -167,7 +175,8 @@ function AnalogClock({ date }: { date: Date }) {
   );
 }
 
-function WorldMap() {
+/** Stark vereinfachte Weltkarte wie in den Win98-Dialogen. marker in Kartenkoordinaten (200 x 90). */
+export function WorldMap({ zoneStripe = false, marker = { x: 104, y: 22 } }: { zoneStripe?: boolean; marker?: { x: number; y: number } }) {
   return (
     <svg viewBox="0 0 200 90" className="world-svg" aria-hidden>
       <rect width="200" height="90" fill="#008080" />
@@ -176,8 +185,8 @@ function WorldMap() {
       <path d="M92 16 L120 12 L170 16 L178 34 L150 44 L130 40 L114 46 L100 36 L94 26 Z" fill="#00a000" />
       <path d="M96 40 L112 42 L118 64 L106 80 L98 62 Z" fill="#00a000" />
       <path d="M160 60 L180 58 L184 72 L166 74 Z" fill="#00a000" />
-      <rect x="100" y="0" width="12" height="90" fill="#fff" opacity="0.35" />
-      <circle cx="104" cy="22" r="2" fill="#ff0" stroke="#000" strokeWidth="0.6" />
+      {zoneStripe ? <rect x="100" y="0" width="12" height="90" fill="#fff" opacity="0.35" /> : null}
+      <circle cx={marker.x} cy={marker.y} r="2" fill="#ff0" stroke="#000" strokeWidth="0.6" />
     </svg>
   );
 }
