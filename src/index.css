@@ -5030,3 +5030,361 @@ body {
   background: rgb(255, calc(80 * var(--pad-value, 1)), 0);
   box-shadow: 0 0 6px #ff0000;
 }
+
+.winmp {
+  width: min(300px, calc(100vw - 36px));
+  padding: 2px;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  user-select: none;
+}
+
+.winmp-case {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #808080;
+  padding: 6px 6px 8px;
+}
+
+.winmp-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.winmp-antenna {
+  width: 8px;
+  height: 14px;
+  margin-top: -8px;
+  background: #808080;
+  border: 1px solid;
+  border-color: #fff #000 #000 #fff;
+}
+
+.winmp-brand {
+  flex: 1;
+}
+
+.winmp-led {
+  width: 8px;
+  height: 8px;
+  background: #00b000;
+  border: 1px solid #004000;
+  box-shadow: inset 1px 1px #c8ffc8;
+}
+
+.winmp-led.is-busy {
+  background: #e0a000;
+  border-color: #6a4a00;
+  box-shadow: inset 1px 1px #ffe7a8;
+}
+
+.winmp-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: clamp(300px, calc(100vh - 210px), 430px);
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #404040 #fff #fff #404040;
+  overflow: hidden;
+}
+
+.winmp-keys {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 2px 0;
+}
+
+.icq-btn {
+  min-width: 76px;
+  height: 23px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #000 #000 #fff;
+  box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #808080;
+  appearance: none;
+}
+
+.icq-btn:hover,
+.icq-btn:focus,
+.icq-btn:active {
+  color: #000;
+  -webkit-text-fill-color: #000;
+}
+
+.icq-btn:active:not(:disabled) {
+  border-color: #000 #fff #fff #000;
+  box-shadow: inset 1px 1px #808080, inset -1px -1px #dfdfdf;
+  padding: 1px 9px 0 11px;
+}
+
+.icq-btn:disabled {
+  color: #808080;
+  -webkit-text-fill-color: #808080;
+  text-shadow: 1px 1px #fff;
+}
+
+.icq-btn:disabled:hover,
+.icq-btn:disabled:focus,
+.icq-btn:disabled:active {
+  color: #808080;
+  -webkit-text-fill-color: #808080;
+}
+
+.icq-app,
+.icq-boot {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+}
+
+.icq-caption {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 4px;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-weight: 700;
+  background: linear-gradient(to right, #000080, #1084d0);
+}
+
+.icq-caption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icq-boot-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.icq-boot-body h2,
+.icq-boot-body p {
+  margin: 0;
+}
+
+.icq-boot-body h2 {
+  font-size: 16px;
+}
+
+.icq-boot-bar {
+  width: min(220px, 100%);
+  margin-top: 8px;
+}
+
+.icq-boot-line {
+  min-height: 2.4em;
+  font-size: 12px;
+}
+
+.icq-me {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid #808080;
+}
+
+.icq-me b,
+.icq-me div {
+  line-height: 1.2;
+}
+
+.icq-status-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.icq-status-pick select {
+  font: inherit;
+  color: #000;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+}
+
+.icq-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #fff;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+}
+
+.icq-group {
+  padding: 2px 4px;
+  background: #d4d0c8;
+  border-bottom: 1px solid #808080;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.icq-contact {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  text-align: left;
+  font: inherit;
+  appearance: none;
+}
+
+.icq-contact svg {
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.icq-nick {
+  font-weight: 700;
+}
+
+.icq-status-text {
+  font-size: 11px;
+  color: #404040;
+  -webkit-text-fill-color: #404040;
+}
+
+.icq-contact:hover,
+.icq-contact:focus,
+.icq-contact:active {
+  background: #000080;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.icq-contact:hover .icq-status-text,
+.icq-contact:focus .icq-status-text,
+.icq-contact:active .icq-status-text {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.icq-status-bar {
+  flex: none;
+}
+
+.icq-peer {
+  margin: 0;
+  padding: 3px 6px;
+  font-size: 11px;
+  border-bottom: 1px solid #808080;
+}
+
+.icq-log {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px;
+  background: #fff;
+  border-top: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  user-select: text;
+}
+
+.icq-empty {
+  margin: 0;
+  color: #404040;
+}
+
+.icq-line {
+  margin: 0 0 8px;
+}
+
+.icq-line b {
+  display: block;
+  color: #0e6a24;
+  -webkit-text-fill-color: #0e6a24;
+}
+
+.icq-line.is-me b {
+  color: #000080;
+  -webkit-text-fill-color: #000080;
+}
+
+.icq-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  background: #c0c0c0;
+}
+
+.icq-compose label {
+  font-size: 11px;
+}
+
+.icq-compose textarea {
+  resize: none;
+  height: 52px;
+  padding: 3px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #000;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  user-select: text;
+}
+
+.icq-compose-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.icq-about {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+}
+
+.icq-about-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.icq-about-body p {
+  margin: 0;
+}

@@ -179,6 +179,10 @@ export const assistants: Record<AssistantId, AssistantProfile> = {
         text: 'It really whips the llama’s ass! Spielen Sie ruhig mal am 10-Band-Equalizer herum.',
         animation: 'Congratulate',
       },
+      icq: {
+        text: 'Das WinMP Handy! ICQ 99b wählt sich gerade ein. Klicken Sie einen Nickname an — die Antwort kommt per Zufall und meistens daneben.',
+        animation: 'GetAttention',
+      },
       msdos: {
         text: 'C:\\> – die gute alte Kommandozeile! Probieren Sie oben »Spiele ▾« oder ziehen Sie eine eigene .zip-Datei hinein.',
         animation: 'GetTechy',
@@ -351,6 +355,10 @@ export const assistants: Record<AssistantId, AssistantProfile> = {
       winamp: {
         text: 'Musik aus den Neunzigern! Vergesst nicht, an den zehn Reglern des Klangzaubers zu schieben.',
         animation: 'Pleased',
+      },
+      icq: {
+        text: 'Ein WinMP Handy mit ICQ! Die fünf Nicknames sind erfunden, ihre Sprüche leider auch.',
+        animation: 'Announce',
       },
       msdos: {
         text: 'Die alten Runen von MS-DOS! Wählt oben ein Spiel oder zieht ein eigenes .zip-Archiv in das schwarze Feld.',
