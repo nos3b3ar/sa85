@@ -45,6 +45,11 @@ body {
   cursor: var(--cur-progress) !important;
 }
 
+/* Netlify fügt die Leiste beim Ausliefern ein, netlify.toml kann sie nicht abschalten. Sie läge sonst über der Taskleiste. */
+[data-netlify-deploy-id] {
+  display: none !important;
+}
+
 .pointer-trail {
   position: fixed;
   inset: 0;
