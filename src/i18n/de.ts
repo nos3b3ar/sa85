@@ -549,6 +549,12 @@ export const de = {
     noVibration: 'Dieser Controller oder Browser unterstützt keine Vibration.',
     disconnected: 'Der Controller wurde getrennt.',
   },
+  boot: {
+    usbConsentQuestion: 'Zugriff auf den USB-Stick erlauben?',
+    usbConsentNote: 'Der Browser öffnet danach eine Ordnerauswahl. Der Ordner gilt als Stick und wird nur gelesen, nie beschrieben.',
+    usbConsentYes: 'Ja',
+    usbConsentNo: 'Nein',
+  },
 };
 
 export type Messages = typeof de;

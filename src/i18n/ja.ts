@@ -547,4 +547,10 @@ export const ja: Messages = {
     noVibration: 'このコントローラまたはブラウザは振動に対応していません。',
     disconnected: 'コントローラが切断されました。',
   },
+  boot: {
+    usbConsentQuestion: 'USB メモリへのアクセスを許可しますか?',
+    usbConsentNote: 'このあとブラウザでフォルダの選択画面が開きます。選んだフォルダは USB メモリとして扱われ、読み取りのみ行い、書き込みはしません。',
+    usbConsentYes: 'はい',
+    usbConsentNo: 'いいえ',
+  },
 };
