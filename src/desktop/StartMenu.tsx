@@ -3,6 +3,7 @@ import { Folder } from '@react95/icons/Folder';
 import { useState } from 'react';
 import { MenuList, MenuListItem, Separator } from 'react95';
 import { desktopApps, type DesktopApp } from '../apps/registry';
+import { appTitle, useT } from '../i18n';
 
 type StartMenuProps = {
   onOpen: (appId: string) => void;
@@ -11,6 +12,7 @@ type StartMenuProps = {
 
 export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
   const [gamesOpen, setGamesOpen] = useState(false);
+  const t = useT();
   const visible = desktopApps.filter((app) => app.showInStartMenu !== false);
   const games = visible.filter((app) => app.startMenuGroup === 'games');
 
@@ -34,7 +36,7 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
           >
             <span className="start-item is-large">
               <Folder variant="32x32_4" />
-              Spiele
+              {t.shell.games}
               <span className="start-arrow" aria-hidden="true" />
             </span>
             {gamesOpen ? (
@@ -58,7 +60,7 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
         <MenuListItem onClick={onShutdown} onMouseEnter={() => setGamesOpen(false)}>
           <span className="start-item is-large">
             <Computer variant="32x32_4" />
-            Beenden...
+            {t.shell.shutdown}
           </span>
         </MenuListItem>
       </MenuList>
@@ -68,10 +70,11 @@ export function StartMenu({ onOpen, onShutdown }: StartMenuProps) {
 
 function StartItem({ app, large = false }: { app: DesktopApp; large?: boolean }) {
   const Icon = app.icon;
+  const t = useT();
   return (
     <span className={large ? 'start-item is-large' : 'start-item'}>
       <Icon variant={large ? '32x32_4' : '16x16_4'} />
-      {app.title}
+      {appTitle(t, app)}
     </span>
   );
 }

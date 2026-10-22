@@ -44,7 +44,16 @@ export const GlobalStyles = createGlobalStyle`
     font-family: "MS Sans Serif", Tahoma, sans-serif;
   }
 
-  button, input, textarea {
+  /* MS Sans Serif hat keine japanischen oder thailändischen Zeichen. */
+  html[lang='ja'] body {
+    font-family: "MS Sans Serif", "MS UI Gothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", Meiryo, "Noto Sans JP", sans-serif;
+  }
+
+  html[lang='th'] body {
+    font-family: "MS Sans Serif", Tahoma, "Leelawadee UI", Thonburi, "Noto Sans Thai", sans-serif;
+  }
+
+  button, input, textarea, select {
     font-family: inherit;
   }
 

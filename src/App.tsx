@@ -11,6 +11,8 @@ import {
 import { BiosSetup } from './boot/BiosSetup';
 import { BootScreen } from './boot/BootScreen';
 import { DosMode } from './boot/DosMode';
+import { CursorHost } from './cursors/CursorHost';
+import { PointerTrail } from './cursors/PointerTrail';
 import { PowerScreen } from './boot/PowerScreen';
 import { ScanDisk } from './boot/ScanDisk';
 import { ShutdownScreen } from './boot/ShutdownScreen';
@@ -49,7 +51,7 @@ export default function App() {
   const [afterShutdown, setAfterShutdown] = useState<'off' | 'restart'>('off');
   const jinglePlayed = useRef(false);
   const desktopTimer = useRef(0);
-  const { look } = useSettings();
+  const { look, locale } = useSettings();
 
   const playJingle = () => {
     jinglePlayed.current = true;
@@ -129,9 +131,15 @@ export default function App() {
     document.documentElement.dataset.look = look;
   }, [look]);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   return (
     <ThemeProvider theme={themes[look]}>
       <GlobalStyles />
+      <CursorHost />
+      <PointerTrail />
       <div className="shell">
         {phase === 'power' ? (
           <PowerScreen

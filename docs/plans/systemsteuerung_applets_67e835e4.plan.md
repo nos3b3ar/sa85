@@ -4,34 +4,34 @@ overview: Die sechs noch leeren Einträge der Systemsteuerung (Maus, Ländereins
 todos:
   - id: settings
     content: settings.ts um locale, mouse, users, powerScheme, showPowerMeter erweitern inkl. Validierung
-    status: pending
+    status: completed
   - id: i18n
     content: i18n-Schicht (useT, de/en/fr/es/ja/th) anlegen und Shell, DialogFooter, Explorer-Ordner, bestehende Systemdialoge umstellen; Fonts fuer ja/th
-    status: pending
+    status: completed
   - id: cursors
     content: Win98-Zeigerschemata als Pixel-SVGs, CSS-Variablen in index.css, CursorHost, Upload mit Canvas-Normalisierung
-    status: pending
+    status: completed
   - id: mouse
     content: MouseApp mit Tasten/Zeiger/Bewegung, useDoubleActivate-Hook, Linkshaender-Tausch, PointerTrail
-    status: pending
+    status: completed
   - id: regional
     content: RegionalApp mit Original-Tabs und Sprachauswahl
-    status: pending
+    status: completed
   - id: users
     content: UsersApp mit Administrator-Standardkonto und Neu-Assistent
-    status: pending
+    status: completed
   - id: network
     content: NetworkApp mit Konfiguration/Identifikation/Zugriffssteuerung, TCP/IP-Eigenschaften, Live-Verbindungsstatus
-    status: pending
+    status: completed
   - id: power
     content: PowerApp mit Energieschemas, Akkuabfrage per getBattery, Energieanzeige in der Taskleiste
-    status: pending
+    status: completed
   - id: gamepad
     content: GameControllerApp mit Gamepad-API-Liste und Live-Testdialog
-    status: pending
+    status: completed
   - id: wire
     content: Apps in registry.tsx registrieren, folders.ts verlinken, Typecheck und Browser-Test
-    status: pending
+    status: completed
 isProject: false
 ---
 
