@@ -26,6 +26,7 @@ export class WinampEngine {
   private endTimer = 0;
   private current: Track | null = null;
   private pausedAt = 0;
+  private buffering = false;
 
   constructor(private readonly ctx: AudioContext, private readonly onEnded: () => void) {
     this.input = ctx.createGain();
@@ -99,6 +100,10 @@ export class WinampEngine {
     return this.pausedAt;
   }
 
+  isBuffering() {
+    return this.buffering;
+  }
+
   forget(src: string) {
     const node = this.files.get(src);
     if (!node) return;
@@ -129,11 +134,17 @@ export class WinampEngine {
       window.setTimeout(() => gain.disconnect(), 120);
       this.synth = null;
     }
-    if (this.file) {
-      this.file.element.pause();
-      this.file.element.onended = null;
-      this.file = null;
+    const file = this.file;
+    this.file = null;
+    this.setBuffering(false);
+    if (file) {
+      file.element.onended = null;
+      file.element.pause();
     }
+  }
+
+  private setBuffering(value: boolean) {
+    this.buffering = value;
   }
 
   private startSynth(song: Song, offset: number) {
@@ -173,13 +184,32 @@ export class WinampEngine {
       element.preload = 'auto';
       const source = this.ctx.createMediaElementSource(element);
       source.connect(this.input);
+      element.addEventListener('playing', () => {
+        if (this.file?.element === element) this.setBuffering(false);
+      });
+      element.addEventListener('waiting', () => {
+        if (this.file?.element === element) this.setBuffering(true);
+      });
+      element.addEventListener('stalled', () => {
+        if (this.file?.element === element && !element.paused) this.setBuffering(true);
+      });
       node = { element, source };
       this.files.set(src, node);
     }
-    node.element.currentTime = offset;
-    node.element.onended = () => this.finish();
-    void node.element.play().catch(() => undefined);
-    this.file = node;
+    const active = node;
+    this.file = active;
+    this.setBuffering(active.element.readyState < HTMLMediaElement.HAVE_FUTURE_DATA);
+    if (offset > 0 || active.element.currentTime !== offset) {
+      try {
+        active.element.currentTime = offset;
+      } catch {
+        // Metadaten fehlen noch; die Wiedergabe beginnt bei 0.
+      }
+    }
+    active.element.onended = () => this.finish();
+    void active.element.play().catch(() => {
+      if (this.file?.element === active.element) this.setBuffering(false);
+    });
   }
 
   private finish() {
