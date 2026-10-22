@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { getAudioContext } from '../audio/audio';
 import { effectiveVolume, onSettingsChange } from '../settings/settings';
-import { SegmentDisplay } from './shared/SegmentDisplay';
+import { SegmentDisplay, SegmentLoader } from './shared/SegmentDisplay';
 import type { AppProps, WindowChrome } from './types';
 import { WinampIcon } from './WinampIcon';
 import { eqBands, WinampEngine, type EqSettings, type Track } from './winamp/engine';
@@ -47,6 +47,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
   const [presetsOpen, setPresetsOpen] = useState(false);
   const [eq, setEq] = useState<EqSettings>({ enabled: true, preamp: 0, bands: eqBands.map(() => 0) });
   const [durations, setDurations] = useState<Record<string, number>>({});
+  const [buffering, setBuffering] = useState(false);
   const scale = useScale();
   const innerRef = useRef<HTMLDivElement>(null);
   const innerHeight = useNaturalHeight(innerRef);
@@ -113,7 +114,11 @@ export function WinampApp({ chrome, onClose }: AppProps) {
     const peaks = new Float32Array(visBars);
     const draw = () => {
       const engine = engineRef.current;
-      if (engine) setPosition(Math.round(engine.position() * 10) / 10);
+      if (engine) {
+        setPosition(Math.round(engine.position() * 10) / 10);
+        const nextBuffering = engine.isBuffering();
+        setBuffering((prev) => (prev === nextBuffering ? prev : nextBuffering));
+      }
       const canvas = visRef.current;
       const ctx = canvas?.getContext('2d');
       if (canvas && ctx) {
@@ -201,6 +206,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
     if (!player || !item) return;
     setIndex(next);
     setSelected(next);
+    setBuffering(item.kind === 'file');
     player.play(item);
     setStatus('playing');
   };
@@ -228,6 +234,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
 
   const stop = () => {
     engineRef.current?.stop();
+    setBuffering(false);
     setStatus('stopped');
     setPosition(0);
   };
@@ -292,6 +299,7 @@ export function WinampApp({ chrome, onClose }: AppProps) {
     setEq((prev) => ({ ...prev, bands: prev.bands.map((value, i) => (i === band ? snapGain(gain) : value)) }));
   };
 
+  const loading = status === 'playing' && buffering;
   const timeValue = remaining ? Math.max(0, duration - shown) : shown;
   const minutes = String(Math.min(99, Math.floor(timeValue / 60))).padStart(2, '0');
   const seconds = String(Math.floor(timeValue % 60)).padStart(2, '0');
@@ -323,13 +331,21 @@ export function WinampApp({ chrome, onClose }: AppProps) {
                   <button
                     type="button"
                     className="wa-time"
-                    title="Zwischen verstrichener und verbleibender Zeit umschalten"
-                    onClick={() => setRemaining((value) => !value)}
+                    title={loading ? 'Titel wird geladen' : 'Zwischen verstrichener und verbleibender Zeit umschalten'}
+                    onClick={() => {
+                      if (!loading) setRemaining((value) => !value);
+                    }}
                   >
-                    <SegmentDisplay className="wa-time-sign" value={remaining && status !== 'stopped' ? '-' : ' '} on="#00e000" off="transparent" />
-                    <SegmentDisplay className="wa-time-digits" value={status === 'stopped' ? '  ' : minutes} on="#00e000" off="#0b2a0b" label="Minuten" />
-                    <span className="wa-time-colon" />
-                    <SegmentDisplay className="wa-time-digits" value={status === 'stopped' ? '  ' : seconds} on="#00e000" off="#0b2a0b" label="Sekunden" />
+                    <SegmentDisplay className="wa-time-sign" value={remaining && status !== 'stopped' && !loading ? '-' : ' '} on="#00e000" off="transparent" />
+                    {loading ? (
+                      <SegmentLoader className="wa-time-loader" on="#00e000" off="#0b2a0b" />
+                    ) : (
+                      <>
+                        <SegmentDisplay className="wa-time-digits" value={status === 'stopped' ? '  ' : minutes} on="#00e000" off="#0b2a0b" label="Minuten" />
+                        <span className="wa-time-colon" />
+                        <SegmentDisplay className="wa-time-digits" value={status === 'stopped' ? '  ' : seconds} on="#00e000" off="#0b2a0b" label="Sekunden" />
+                      </>
+                    )}
                   </button>
                 </div>
                 <canvas ref={visRef} className="wa-vis" width={visBars * 4 - 1} height={visRows} />
@@ -465,7 +481,9 @@ export function WinampApp({ chrome, onClose }: AppProps) {
                   onDoubleClick={() => playIndex(itemIndex)}
                 >
                   <span>{itemIndex + 1}. {item.artist} - {item.title}</span>
-                  <span>{formatShort(durations[item.id] ?? 0)}</span>
+                  <span className="wa-pl-length">
+                    {loading && itemIndex === index ? <BufferSpinner /> : formatShort(durations[item.id] ?? 0)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -574,6 +592,14 @@ function ToggleButton({ label, title, active, wide = false, onClick }: {
       <span className="wa-led" />
       <span>{label}</span>
     </button>
+  );
+}
+
+function BufferSpinner() {
+  return (
+    <span className="wa-pl-spinner" role="status" aria-label="Laden">
+      {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
+    </span>
   );
 }
 
