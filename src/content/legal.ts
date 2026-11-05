@@ -208,9 +208,9 @@ export const datenschutz: LegalDocument = {
         {
           type: 'p',
           parts: [
-            'Die Angaben werden an eine Serverfunktion bei unserem Hoster Netlify übertragen und von dort ohne Zwischenspeicherung als E-Mail an das Postfach ',
+            'Die Angaben werden an eine Serverfunktion bei unserem Hoster Netlify übertragen und von dort als E-Mail an das Postfach ',
             mail,
-            ' geschickt. Dieses Postfach wird mit Microsoft 365 betrieben (Microsoft Corporation, One Microsoft Way, Redmond, WA 98052, USA). Microsoft ist nach dem EU-US Data Privacy Framework zertifiziert.',
+            ' geschickt. Name, E-Mail-Adresse, Betreff und Nachricht speichert diese Funktion nicht. Gezählt wird nur, wie oft eine IP-Adresse am selben Tag eine Nachricht gesendet hat, höchstens zwei. Dafür liegt bei Netlify bis zum nächsten Tag ein Hash der IP-Adresse mit dieser Zahl. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Dieses Postfach wird mit Microsoft 365 betrieben (Microsoft Corporation, One Microsoft Way, Redmond, WA 98052, USA). Microsoft ist nach dem EU-US Data Privacy Framework zertifiziert.',
           ],
         },
         {

@@ -5,6 +5,7 @@
  * Umgebungsvariablen in Netlify (nie im Repo):
  * TURNSTILE_SECRET_KEY, MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, CONTACT_MAILBOX
  */
+import { getStore } from '@netlify/blobs';
 
 type Payload = {
   name?: unknown;
@@ -17,6 +18,43 @@ type Payload = {
 
 const limits = { name: 100, email: 200, subject: 200, message: 5000 };
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const dailySendLimit = 2;
+
+type Quota = { day: string; count: number };
+
+function berlinDay() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+function isQuota(value: unknown): value is Quota {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Quota;
+  return typeof entry.day === 'string' && Number.isInteger(entry.count) && entry.count >= 0;
+}
+
+async function quotaKey(ip: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`sa85-contact-quota:${ip}`));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** Reserviert einen der zwei Sendeplätze. Gibt eine Rückgabefunktion zurück, falls der Versand scheitert. */
+async function reserveSend(ip: string) {
+  const store = getStore('contact-sends', { consistency: 'strong' });
+  const key = await quotaKey(ip);
+  const day = berlinDay();
+  const stored = await store.get(key, { type: 'json', consistency: 'strong' });
+  const count = isQuota(stored) && stored.day === day ? stored.count : 0;
+  if (count >= dailySendLimit) return null;
+  await store.setJSON(key, { day, count: count + 1 } satisfies Quota);
+  return async () => {
+    await store.setJSON(key, { day, count } satisfies Quota);
+  };
+}
 
 function json(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -108,7 +146,14 @@ export default async function handler(request: Request) {
   try {
     const ip = request.headers.get('x-nf-client-connection-ip');
     if (!(await verifyTurnstile(token, ip))) return json(403, { error: 'captcha' });
-    await sendMail({ name, email, subject, message });
+    const release = ip ? await reserveSend(ip) : null;
+    if (ip && !release) return json(429, { error: 'rate' });
+    try {
+      await sendMail({ name, email, subject, message });
+    } catch (error) {
+      await release?.().catch(() => undefined);
+      throw error;
+    }
   } catch (error) {
     console.error('contact failed', error instanceof Error ? error.message : error);
     return json(502, { error: 'mail' });
@@ -119,5 +164,6 @@ export default async function handler(request: Request) {
 
 export const config = {
   path: '/api/contact',
-  rateLimit: { windowLimit: 5, windowSize: 60, aggregateBy: ['ip', 'domain'] },
+  // Kurzes Fenster gegen Massenaufrufe. Der Tageszähler oben begrenzt den Versand auf zwei Mails.
+  rateLimit: { windowLimit: 10, windowSize: 60, aggregateBy: ['ip', 'domain'] },
 };

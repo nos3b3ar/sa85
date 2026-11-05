@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.7",
     "@react95/icons": "^2.6.0",
     "@supabase/supabase-js": "^2.119.0",
     "clippyjs": "^0.1.0",

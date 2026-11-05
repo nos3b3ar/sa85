@@ -16,7 +16,7 @@ type Notice = {
 const errorText: Record<ContactError, string> = {
   captcha: 'Die Sicherheitsprüfung ist abgelaufen oder fehlgeschlagen. Bitte bestätigen Sie sie erneut.',
   invalid: 'Bitte prüfen Sie Ihre Angaben.',
-  rate: 'Zu viele Nachrichten in kurzer Zeit. Bitte versuchen Sie es in einer Minute erneut.',
+  rate: 'Von dieser Verbindung sind heute schon zwei Nachrichten angekommen. Bitte versuchen Sie es morgen erneut oder schreiben Sie direkt an ',
   mail: 'Die Nachricht konnte nicht gesendet werden. Bitte schreiben Sie direkt an ',
 };
 
@@ -73,7 +73,8 @@ export function ContactApp({ onClose, openApp }: AppProps) {
       });
     } catch (error) {
       const reason = error instanceof ContactSendError ? error.reason : 'mail';
-      setNotice({ title: 'Kontakt', message: reason === 'mail' ? `${errorText.mail}${profile.email}.` : errorText[reason] });
+      const withAddress = reason === 'mail' || reason === 'rate';
+      setNotice({ title: 'Kontakt', message: withAddress ? `${errorText[reason]}${profile.email}.` : errorText[reason] });
     } finally {
       setSending(false);
       resetCaptcha();
