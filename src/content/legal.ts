@@ -208,9 +208,15 @@ export const datenschutz: LegalDocument = {
         {
           type: 'p',
           parts: [
-            'Der Versand läuft über Netlify Forms. Netlify speichert die Einsendung und prüft sie mit dem Spamfilter Akismet der Automattic, Inc. (USA), einem Unterauftragnehmer von Netlify. Eine Benachrichtigung geht an das Postfach ',
+            'Die Angaben werden an eine Serverfunktion bei unserem Hoster Netlify übertragen und von dort ohne Zwischenspeicherung als E-Mail an das Postfach ',
             mail,
-            '. Dieses Postfach wird mit Microsoft 365 betrieben (Microsoft Corporation, One Microsoft Way, Redmond, WA 98052, USA). Microsoft ist nach dem EU-US Data Privacy Framework zertifiziert.',
+            ' geschickt. Dieses Postfach wird mit Microsoft 365 betrieben (Microsoft Corporation, One Microsoft Way, Redmond, WA 98052, USA). Microsoft ist nach dem EU-US Data Privacy Framework zertifiziert.',
+          ],
+        },
+        {
+          type: 'p',
+          parts: [
+            'Zum Schutz vor Spam nutzen wir Cloudflare Turnstile (Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA). Beim Öffnen des Formulars lädt Ihr Browser ein Skript von Cloudflare, das anhand technischer Merkmale wie IP-Adresse und Browserdaten prüft, ob ein Mensch das Formular nutzt. Das Ergebnis wird beim Absenden mit Ihrer IP-Adresse bei Cloudflare bestätigt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, unser berechtigtes Interesse ist die Abwehr automatisierter Einsendungen. Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.',
           ],
         },
         {

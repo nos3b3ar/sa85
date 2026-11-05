@@ -209,6 +209,53 @@ export async function playStartupSound(which: StartupTrack = 'win98') {
   void audio.play().catch(() => undefined);
 }
 
+const sampleBuffers: Record<string, Promise<AudioBuffer | null>> = {};
+
+function loadSample(src: string) {
+  const ctx = context();
+  if (!ctx) return Promise.resolve(null);
+  sampleBuffers[src] ??= fetch(src)
+    .then((response) => response.arrayBuffer())
+    .then((data) => ctx.decodeAudioData(data))
+    .catch(() => null);
+  return sampleBuffers[src];
+}
+
+async function playSample(src: string, baseVolume: number) {
+  const volume = baseVolume * effectiveVolume();
+  if (volume <= 0) return;
+  const ctx = context();
+  const buffer = await loadSample(src);
+  if (!ctx || !buffer) return;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.value = volume;
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
+
+const icqStartupSrc = '/sounds/icq-startup.mp3';
+const icqMessageSrc = '/sounds/icq-message.wav';
+let lastIcqMessage = 0;
+
+export function preloadIcqSounds() {
+  void loadSample(icqStartupSrc);
+  void loadSample(icqMessageSrc);
+}
+
+export function playIcqStartup() {
+  void playSample(icqStartupSrc, 0.8);
+}
+
+export function playIcqMessage() {
+  const now = Date.now();
+  if (now - lastIcqMessage < 600) return;
+  lastIcqMessage = now;
+  void playSample(icqMessageSrc, 0.8);
+}
+
 export function playDing() {
   tone(880, 0.09, 0.05);
 }

@@ -1,5 +1,3 @@
-import { Desktop as DesktopGlyph } from '@react95/icons/Desktop';
-import { Ie } from '@react95/icons/Ie';
 import { Rnaui101 } from '@react95/icons/Rnaui101';
 import { Mailnews2 } from '@react95/icons/Mailnews2';
 import { Mute } from '@react95/icons/Mute';
@@ -7,6 +5,9 @@ import { Unmute } from '@react95/icons/Unmute';
 import { useEffect, useRef, useState } from 'react';
 import { AppBar, Button, Frame, MenuList, MenuListItem, Toolbar, Window, WindowContent } from 'react95';
 import { getApp } from '../apps/registry';
+import { IeIcon, ShowDesktopIcon } from '../apps/win98Icons';
+import { IcqFlower, IcqMessageIcon } from '../apps/icq/IcqFlower';
+import { useIcqTray } from '../apps/icq/tray';
 import { NetscapeIcon } from '../apps/NetscapeIcon';
 import { WinampIcon } from '../apps/WinampIcon';
 import { VolumeControl } from '../apps/VolumeControl';
@@ -42,6 +43,7 @@ export function Taskbar({
   const now = useClock();
   const settings = useSettings();
   const online = useOnline();
+  const icq = useIcqTray();
   const t = useT();
   const tag = useLocaleTag();
   const battery = useBattery();
@@ -91,10 +93,10 @@ export function Taskbar({
           <div className="quick-launch">
             <span className="toolbar-grip" aria-hidden />
             <QuickButton title={t.shell.showDesktop} onClick={onShowDesktop}>
-              <DesktopGlyph variant="16x16_4" />
+              <ShowDesktopIcon variant="16x16_4" />
             </QuickButton>
             <QuickButton title={t.shell.launchIe} onClick={() => onOpenApp('ie')}>
-              <Ie variant="16x16_4" />
+              <IeIcon variant="16x16_4" />
             </QuickButton>
             <QuickButton title={t.shell.launchNetscape} onClick={() => onOpenApp('netscape')}>
               <NetscapeIcon variant="16x16_4" />
@@ -194,6 +196,22 @@ export function Taskbar({
             >
               <SpeakerIcon variant="16x16_4" />
             </button>
+            {icq ? (
+              <button
+                type="button"
+                className={icq.unread ? 'tray-icon tray-icq is-unread' : 'tray-icon tray-icq'}
+                title="ICQ"
+                aria-label="ICQ"
+                onClick={() => {
+                  setVolumeOpen(false);
+                  setLinkMenu(false);
+                  onOpenApp('icq');
+                }}
+              >
+                <IcqFlower size={16} tone={icq.status} />
+                {icq.unread ? <IcqMessageIcon className="tray-icq-letter" /> : null}
+              </button>
+            ) : null}
             <button
               type="button"
               className="tray-clock"

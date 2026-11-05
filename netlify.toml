@@ -12,6 +12,7 @@
   [headers.values]
     Content-Security-Policy = """\
       frame-src 'self' https://web.archive.org \
+        https://challenges.cloudflare.com \
         https://cameronsworld.net https://www.cameronsworld.net \
         https://zombo.com https://www.zombo.com \
         https://windows93.net https://www.windows93.net \

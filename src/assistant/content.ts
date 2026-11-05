@@ -180,7 +180,7 @@ export const assistants: Record<AssistantId, AssistantProfile> = {
         animation: 'Congratulate',
       },
       icq: {
-        text: 'Das WinMP Handy! ICQ 99b wählt sich gerade ein. Klicken Sie einen Nickname an — die Antwort kommt per Zufall und meistens daneben.',
+        text: 'Uh-oh! ICQ 2001b. Die KI-Agenten antworten per Zufall und meistens daneben – mit Haken bei der Anmeldung chatten Sie auch mit echten Besuchern.',
         animation: 'GetAttention',
       },
       msdos: {
@@ -357,7 +357,7 @@ export const assistants: Record<AssistantId, AssistantProfile> = {
         animation: 'Pleased',
       },
       icq: {
-        text: 'Ein WinMP Handy mit ICQ! Die fünf Nicknames sind erfunden, ihre Sprüche leider auch.',
+        text: 'Die Blume von ICQ 2001b! Die KI-Agenten sind erfunden, ihre Sprüche leider auch. Echte Besucher aber nicht.',
         animation: 'Announce',
       },
       msdos: {

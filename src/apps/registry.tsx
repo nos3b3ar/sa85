@@ -1,16 +1,13 @@
 import { Computer } from '@react95/icons/Computer';
 import { Controls3000 } from '@react95/icons/Controls3000';
 import { Desk100 } from '@react95/icons/Desk100';
-import { Folder } from '@react95/icons/Folder';
 import { Globe } from '@react95/icons/Globe';
-import { Ie } from '@react95/icons/Ie';
 import { Intl101 } from '@react95/icons/Intl101';
 import { Joy102 } from '@react95/icons/Joy102';
 import { Mail } from '@react95/icons/Mail';
 import { Network2 } from '@react95/icons/Network2';
 import { Notepad } from '@react95/icons/Notepad';
 import { PowerOn } from '@react95/icons/PowerOn';
-import { RecycleEmpty } from '@react95/icons/RecycleEmpty';
 import { Sol1 } from '@react95/icons/Sol1';
 import { Winmine1 } from '@react95/icons/Winmine1';
 import { Timedate } from '@react95/icons/Timedate';
@@ -24,7 +21,9 @@ import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
 import { MouseIcon, UsersIcon } from './systemIcons';
 import { IcqIcon } from './IcqIcon';
+import { NapsterIcon } from './NapsterIcon';
 import { WinampIcon } from './WinampIcon';
+import { ComputerIcon, FolderIcon, IeIcon, RecycleIcon } from './win98Icons';
 import type { Look } from '../settings/settings';
 import type { AppProps } from './types';
 
@@ -41,6 +40,8 @@ type AppBase = {
   startMenuGroup?: 'games';
   /** Titelleiste und Taskleiste, falls abweichend vom Startmenü. */
   windowTitle?: string;
+  /** Fremdprogramm: im Windows-95-Look mit Verknüpfungspfeil auf dem Desktop. Links haben ihn immer. */
+  shortcut?: boolean;
   windowIcon?: DesktopIconComponent;
 };
 
@@ -81,7 +82,7 @@ export const desktopApps: DesktopApp[] = [
     icon: User,
     kind: 'window',
     component: lazyNamed(() => import('./AboutApp'), 'AboutApp'),
-    defaultSize: { width: 560, height: 430 },
+    defaultSize: { width: 620, height: 520 },
   },
   {
     id: 'skills',
@@ -89,12 +90,12 @@ export const desktopApps: DesktopApp[] = [
     icon: Notepad,
     kind: 'window',
     component: lazyNamed(() => import('./SkillsApp'), 'SkillsApp'),
-    defaultSize: { width: 360, height: 248 },
+    defaultSize: { width: 440, height: 460 },
   },
   {
     id: 'portfolio',
     title: 'Portfolio',
-    icon: Folder,
+    icon: FolderIcon,
     kind: 'window',
     component: lazyNamed(() => import('./PortfolioApp'), 'PortfolioApp'),
     defaultSize: { width: 480, height: 340 },
@@ -112,22 +113,22 @@ export const desktopApps: DesktopApp[] = [
     icon: Mail,
     kind: 'window',
     component: lazyNamed(() => import('./ContactApp'), 'ContactApp'),
-    defaultSize: { width: 500, height: 440 },
+    defaultSize: { width: 500, height: 560 },
   },
   {
     id: 'icq',
     title: 'ICQ',
-    windowTitle: 'WinMP Handy',
     icon: IcqIcon,
+    shortcut: true,
     kind: 'window',
     component: lazyNamed(() => import('./IcqApp'), 'IcqApp'),
-    defaultSize: { width: 320, height: 560 },
+    defaultSize: { width: 226, height: 540 },
     sizing: 'content',
   },
   {
     id: 'ie',
     title: 'Internet Explorer',
-    icon: Ie,
+    icon: IeIcon,
     kind: 'window',
     component: lazyNamed(() => import('./BrowserApp'), 'InternetExplorerApp'),
     defaultSize: { width: 800, height: 560 },
@@ -147,9 +148,20 @@ export const desktopApps: DesktopApp[] = [
     id: 'winamp',
     title: 'Winamp',
     icon: WinampIcon,
+    shortcut: true,
     kind: 'window',
     component: lazyNamed(() => import('./WinampApp'), 'WinampApp'),
     defaultSize: { width: 413, height: 522 },
+    chrome: 'skinned',
+  },
+  {
+    id: 'napster',
+    title: 'Napster Music Community',
+    icon: NapsterIcon,
+    shortcut: true,
+    kind: 'window',
+    component: lazyNamed(() => import('./napster/NapsterApp'), 'NapsterApp'),
+    defaultSize: { width: 420, height: 170 },
     chrome: 'skinned',
   },
   {
@@ -172,7 +184,7 @@ export const desktopApps: DesktopApp[] = [
   {
     id: 'games',
     title: 'Spiele',
-    icon: Folder,
+    icon: FolderIcon,
     showInStartMenu: false,
     kind: 'window',
     component: lazyNamed(() => import('./explorer/Explorer'), 'GamesApp'),
@@ -202,7 +214,7 @@ export const desktopApps: DesktopApp[] = [
   {
     id: 'computer',
     title: 'Arbeitsplatz',
-    icon: Computer,
+    icon: ComputerIcon,
     kind: 'window',
     component: lazyNamed(() => import('./explorer/Explorer'), 'MyComputerApp'),
     defaultSize: { width: 620, height: 420 },
@@ -247,7 +259,7 @@ export const desktopApps: DesktopApp[] = [
   {
     id: 'recycle',
     title: 'Papierkorb',
-    icon: RecycleEmpty,
+    icon: RecycleIcon,
     kind: 'window',
     component: lazyNamed(() => import('./explorer/Explorer'), 'RecycleBinApp'),
     defaultSize: { width: 520, height: 340 },

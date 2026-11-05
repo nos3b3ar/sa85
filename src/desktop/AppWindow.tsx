@@ -136,6 +136,7 @@ export function AppWindow({ win, active, onClose, onFocus, onMinimize, onMove }:
   return (
     <Window
       className={className}
+      data-app={app.id}
       resizable={!maximized && !fixedSize}
       style={{
         position: 'absolute',
