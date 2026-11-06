@@ -3677,6 +3677,64 @@ body {
   min-width: 76px;
 }
 
+.close-program-anchor {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.close-program-window {
+  width: min(440px, calc(100vw - 24px));
+}
+
+.close-program-list {
+  height: 132px;
+  margin: 2px 0 12px;
+  padding: 1px;
+  overflow: auto;
+  background: #fff;
+  color: #000;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+}
+
+.close-program-list button {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 18px;
+  text-align: left;
+  cursor: default;
+}
+
+.close-program-list button.is-selected {
+  background: #000080;
+  color: #fff;
+}
+
+.close-program-warning {
+  margin: 0 0 14px;
+}
+
+.close-program-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.close-program-actions button {
+  min-width: 96px;
+}
+
 .look-options {
   display: grid;
   grid-template-columns: 1fr 1fr;

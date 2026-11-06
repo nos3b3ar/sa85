@@ -88,6 +88,14 @@ export const ja: Messages = {
       dos: 'コンピュータを MS-DOS モードで再起動する',
     },
   },
+  closeProgram: {
+    title: 'プログラムの強制終了',
+    explorer: 'エクスプローラ',
+    warning: '警告: CTRL+ALT+DEL をもう一度押すと、コンピュータが再起動します。実行中のすべてのプログラムで、保存されていない情報は失われます。',
+    endTask: 'タスクの終了',
+    shutdown: 'シャットダウン...',
+    cancel: 'キャンセル',
+  },
   explorer: {
     back: '戻る',
     forward: '進む',

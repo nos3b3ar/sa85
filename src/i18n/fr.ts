@@ -88,6 +88,14 @@ export const fr: Messages = {
       dos: 'Redémarrer l’ordinateur en mode MS-DOS ?',
     },
   },
+  closeProgram: {
+    title: 'Fermer le programme',
+    explorer: 'Explorer',
+    warning: 'AVERTISSEMENT : appuyer de nouveau sur CTRL+ALT+SUPPR redémarre l’ordinateur. Les informations non enregistrées de tous les programmes en cours seront perdues.',
+    endTask: 'Fin de tâche',
+    shutdown: 'Arrêter...',
+    cancel: 'Annuler',
+  },
   explorer: {
     back: 'Précédente',
     forward: 'Suivante',

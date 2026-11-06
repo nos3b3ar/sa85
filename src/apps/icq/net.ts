@@ -22,6 +22,8 @@ export type NetHandlers = {
   onVisitors: (rows: VisitorRow[]) => void;
   onPresence: (map: PresenceMap) => void;
   onMessage: (row: MessageRow) => void;
+  /** Der Posteingang ist nach einem Verbindungsabbruch wieder da; Nachrichten dazwischen kamen nicht an. */
+  onResync: () => void;
 };
 
 export type Connection = {
@@ -127,6 +129,7 @@ export async function connect(identity: Identity, presence: Presence, handlers: 
   };
   await track();
 
+  let inboxJoined = false;
   const inbox = supabase
     .channel(`icq-inbox-${myId}`)
     .on(
@@ -134,7 +137,11 @@ export async function connect(identity: Identity, presence: Presence, handlers: 
       { event: 'INSERT', schema: 'public', table: 'icq_messages', filter: `recipient=eq.${myId}` },
       (payload) => handlers.onMessage(payload.new as MessageRow),
     )
-    .subscribe();
+    .subscribe((state) => {
+      if (state !== 'SUBSCRIBED') return;
+      if (inboxJoined) handlers.onResync();
+      inboxJoined = true;
+    });
 
   const heartbeat = window.setInterval(() => {
     void touch().catch(() => undefined);

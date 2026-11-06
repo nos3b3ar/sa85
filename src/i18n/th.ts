@@ -88,6 +88,14 @@ export const th: Messages = {
       dos: 'เริ่มระบบคอมพิวเตอร์ในโหมด MS-DOS?',
     },
   },
+  closeProgram: {
+    title: 'ปิดโปรแกรม',
+    explorer: 'Explorer',
+    warning: 'คำเตือน: การกด CTRL+ALT+DEL อีกครั้งจะเริ่มระบบคอมพิวเตอร์ใหม่ ข้อมูลที่ยังไม่ได้บันทึกในทุกโปรแกรมที่กำลังทำงานจะสูญหาย',
+    endTask: 'จบงาน',
+    shutdown: 'ปิดเครื่อง...',
+    cancel: 'ยกเลิก',
+  },
   explorer: {
     back: 'ย้อนกลับ',
     forward: 'ไปข้างหน้า',

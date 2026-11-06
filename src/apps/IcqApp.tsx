@@ -68,6 +68,7 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
   const [selfStatus, setSelfStatus] = useState<Status>('online');
   const [awayMessages, setAwayMessages] = useState(saved.awayMessages);
   const [netState, setNetState] = useState<NetState>('off');
+  const [synced, setSynced] = useState(false);
   const [notice, setNotice] = useState('');
   const [visitors, setVisitors] = useState<VisitorRow[]>([]);
   const [presence, setPresence] = useState<PresenceMap>({});
@@ -85,6 +86,9 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
   const lastReply = useRef<Record<string, string>>({});
   const lastSend = useRef(0);
   const historyLoaded = useRef(new Set<string>());
+  const seenMessages = useRef(new Set<number>());
+  /** created_at der jüngsten empfangenen Besucher-Nachricht; ab hier wird nachgeholt. */
+  const inboxSince = useRef('');
   const chatsRef = useRef(chats);
   chatsRef.current = chats;
   const visitorsRef = useRef(visitors);
@@ -113,8 +117,8 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
   );
 
   useEffect(() => {
-    if (unread.size === 0 && netState === 'on') saveIcq({ readUntil: new Date().toISOString() });
-  }, [unread, threads, netState]);
+    if (unread.size === 0 && netState === 'on' && synced) saveIcq({ readUntil: inboxSince.current });
+  }, [unread, threads, netState, synced]);
 
   const appendLines = useCallback((key: string, lines: Line[]) => {
     setThreads((prev) => {
@@ -131,12 +135,56 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
     setUnread((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }, []);
 
+  const receive = useCallback(
+    (connection: Connection, rows: MessageRow[]) => {
+      const fresh = rows.filter((row) => !seenMessages.current.has(row.id));
+      if (fresh.length === 0) return;
+      fresh.forEach((row) => {
+        seenMessages.current.add(row.id);
+        if (Date.parse(row.created_at) > Date.parse(inboxSince.current)) inboxSince.current = row.created_at;
+        const key = `visitor:${row.sender}`;
+        appendLines(key, [rowToLine(row, connection.myId)]);
+        markUnread(key);
+      });
+      playIcqMessage();
+      if (fresh.some((row) => !visitorsRef.current.some((visitor) => visitor.id === row.sender))) {
+        void connection.refreshVisitors();
+      }
+    },
+    [appendLines, markUnread],
+  );
+
+  const catchUp = useCallback(async () => {
+    const connection = conn.current;
+    if (!connection) return;
+    const rows = await connection.unreadSince(inboxSince.current).catch(() => null);
+    if (!rows || connection !== conn.current) return;
+    receive(connection, rows);
+    setSynced(true);
+  }, [receive]);
+
+  useEffect(() => {
+    if (netState !== 'on') return;
+    const resync = () => {
+      if (document.visibilityState === 'visible') void catchUp();
+    };
+    document.addEventListener('visibilitychange', resync);
+    window.addEventListener('pageshow', resync);
+    window.addEventListener('online', resync);
+    return () => {
+      document.removeEventListener('visibilitychange', resync);
+      window.removeEventListener('pageshow', resync);
+      window.removeEventListener('online', resync);
+    };
+  }, [netState, catchUp]);
+
   const stopNet = useCallback(() => {
     ticket.current += 1;
     const current = conn.current;
     conn.current = null;
     void current?.disconnect();
     setNetState('off');
+    setSynced(false);
     setPresence({});
   }, []);
 
@@ -148,6 +196,8 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
     async (who: Identity, status: Presence, captchaToken?: string) => {
       const mine = ++ticket.current;
       setNetState('connecting');
+      setSynced(false);
+      inboxSince.current = loadIcq().readUntil ?? new Date(Date.now() - retentionMs).toISOString();
       try {
         const net = await loadNet();
         try {
@@ -156,13 +206,9 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
             onVisitors: setVisitors,
             onPresence: setPresence,
             onMessage: (row: MessageRow) => {
-              if (!connection) return;
-              const key = `visitor:${row.sender}`;
-              appendLines(key, [rowToLine(row, connection.myId)]);
-              markUnread(key);
-              playIcqMessage();
-              if (!visitorsRef.current.some((visitor) => visitor.id === row.sender)) void connection.refreshVisitors();
+              if (connection) receive(connection, [row]);
             },
+            onResync: () => void catchUp(),
           };
           try {
             connection = await net.connect(who, status, handlers, captchaToken);
@@ -180,14 +226,7 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
           conn.current = connection;
           setNetState('on');
           setNotice(text.noticeConnected);
-          const since = loadIcq().readUntil ?? new Date(Date.now() - retentionMs).toISOString();
-          const missed = await connection.unreadSince(since);
-          if (missed.length > 0) playIcqMessage();
-          missed.forEach((row) => {
-            const key = `visitor:${row.sender}`;
-            appendLines(key, [rowToLine(row, connection.myId)]);
-            markUnread(key);
-          });
+          await catchUp();
         } catch (error) {
           if (mine !== ticket.current) return;
           setNetState('error');
@@ -199,7 +238,7 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
         setNotice(text.noticeError);
       }
     },
-    [appendLines, markUnread, text],
+    [receive, catchUp, text],
   );
 
   const login = (who: Identity, wantsNet: boolean, captchaToken?: string) => {
@@ -350,7 +389,10 @@ export function IcqApp({ onClose, setTitle }: AppProps) {
       historyLoaded.current.add(key);
       connection
         .history(contact.id)
-        .then((rows) => appendLines(key, rows.map((row) => rowToLine(row, connection.myId))))
+        .then((rows) => {
+          rows.forEach((row) => seenMessages.current.add(row.id));
+          appendLines(key, rows.map((row) => rowToLine(row, connection.myId)));
+        })
         .catch(() => historyLoaded.current.delete(key));
     }
   };

@@ -1,4 +1,5 @@
 import { Main100 } from '@react95/icons/Main100';
+import { User } from '@react95/icons/User';
 import { Wab321019 } from '@react95/icons/Wab321019';
 import type { ComponentType } from 'react';
 import type { IconVariant } from './registry';
@@ -14,3 +15,12 @@ function withSmallVariant(Icon: LargeOnlyIcon) {
 
 export const MouseIcon = withSmallVariant(Main100);
 export const UsersIcon = withSmallVariant(Wab321019);
+
+/** Das Original sitzt links im Raster (32x32: Spalten 3–19); die verschobene viewBox mittelt es pixelgenau. */
+export function UserIcon({ variant = '32x32_4' }: { variant?: IconVariant }) {
+  return variant === '16x16_4' ? (
+    <User variant="16x16_4" viewBox="-2 -0.5 16 16" />
+  ) : (
+    <User variant="32x32_4" viewBox="-4 -0.5 32 32" />
+  );
+}

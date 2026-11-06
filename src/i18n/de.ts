@@ -90,6 +90,14 @@ export const de = {
       dos: 'Den Computer im MS-DOS-Modus starten?',
     },
   },
+  closeProgram: {
+    title: 'Programm schließen',
+    explorer: 'Explorer',
+    warning: 'Warnung: Durch erneutes Drücken von STRG+ALT+ENTF wird der Computer neu gestartet. Dabei gehen in allen laufenden Programmen nicht gespeicherte Informationen verloren.',
+    endTask: 'Task beenden',
+    shutdown: 'Herunterfahren...',
+    cancel: 'Abbrechen',
+  },
   explorer: {
     back: 'Zurück',
     forward: 'Vorwärts',

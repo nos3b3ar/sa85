@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { MenuList, MenuListItem } from 'react95';
 import { ScreensaverHost } from '../screensaver/ScreensaverHost';
 import { getSettings, updateSettings, useSettings } from '../settings/settings';
-import { desktopApps } from '../apps/registry';
-import { useT } from '../i18n';
+import { desktopApps, getApp } from '../apps/registry';
+import { useT, windowTitle } from '../i18n';
 import { defaultIconPosition } from './iconLayout';
 import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
 import { DesktopAssistant } from './DesktopAssistant';
 import { DesktopIcon } from './DesktopIcon';
 import { DstDialog } from './DstDialog';
+import { CloseProgramDialog } from './CloseProgramDialog';
 import { ShutdownDialog, type ShutdownChoice } from './ShutdownDialog';
 import { Standby } from './Standby';
 import { StartMenu } from './StartMenu';
@@ -40,6 +41,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [dst, setDst] = useState<DstNotice | null>(() => shouldShowDstDialog());
   const [shutdownOpen, setShutdownOpen] = useState(false);
+  const [closeProgramOpen, setCloseProgramOpen] = useState(false);
   const [standby, setStandby] = useState(false);
   const [, setViewport] = useState(0);
   const t = useT();
@@ -79,12 +81,30 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
-      if (typing || shutdownOpen || event.key !== 'Enter' || !selected) return;
+      if (typing || shutdownOpen || closeProgramOpen || event.key !== 'Enter' || !selected) return;
       openApp(selected);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openApp, selected, shutdownOpen]);
+  }, [openApp, selected, shutdownOpen, closeProgramOpen]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!event.ctrlKey || !event.altKey || event.metaKey || event.shiftKey) return;
+      if (event.key !== 'Delete' && event.key !== 'Backspace' && event.code !== 'Delete') return;
+      event.preventDefault();
+      if (closeProgramOpen) {
+        onShutdown('restart');
+        return;
+      }
+      setMenuOpen(false);
+      setContextMenu(null);
+      setShutdownOpen(false);
+      setCloseProgramOpen(true);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [closeProgramOpen, onShutdown]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -207,7 +227,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
       <DesktopAssistant
         openApp={openApp}
         activeAppId={activeWin?.appId ?? null}
-        paused={standby || shutdownOpen}
+        paused={standby || shutdownOpen || closeProgramOpen}
       />
       <Taskbar
         windows={windows}
@@ -231,6 +251,30 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
         )}
       />
       {dst ? <DstDialog notice={dst} onClose={() => setDst(null)} /> : null}
+      {closeProgramOpen ? (
+        <CloseProgramDialog
+          tasks={[
+            { id: 'explorer', title: t.closeProgram.explorer },
+            ...windows.map((win) => ({
+              id: win.id,
+              title: windowTitle(t, getApp(win.appId), win.title),
+            })),
+          ]}
+          initialId={activeId ?? 'explorer'}
+          onEndTask={(id) => {
+            if (id === 'explorer') {
+              windows.forEach((win) => close(win.id));
+              return;
+            }
+            close(id);
+          }}
+          onShutdown={() => {
+            setCloseProgramOpen(false);
+            setShutdownOpen(true);
+          }}
+          onCancel={() => setCloseProgramOpen(false)}
+        />
+      ) : null}
       {shutdownOpen ? (
         <ShutdownDialog
           onChoose={(choice) => {

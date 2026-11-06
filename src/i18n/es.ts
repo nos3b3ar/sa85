@@ -88,6 +88,14 @@ export const es: Messages = {
       dos: 'reiniciar el equipo en modo MS-DOS?',
     },
   },
+  closeProgram: {
+    title: 'Cerrar programa',
+    explorer: 'Explorer',
+    warning: 'ADVERTENCIA: Si vuelve a presionar CTRL+ALT+SUPR, el equipo se reiniciará. Se perderá la información no guardada de todos los programas en ejecución.',
+    endTask: 'Finalizar tarea',
+    shutdown: 'Apagar...',
+    cancel: 'Cancelar',
+  },
   explorer: {
     back: 'Atrás',
     forward: 'Adelante',

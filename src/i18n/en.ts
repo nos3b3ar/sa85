@@ -88,6 +88,14 @@ export const en: Messages = {
       dos: 'Restart the computer in MS-DOS mode?',
     },
   },
+  closeProgram: {
+    title: 'Close Program',
+    explorer: 'Explorer',
+    warning: 'WARNING: Pressing CTRL+ALT+DEL again will restart your computer. You will lose any unsaved information in all programs that are running.',
+    endTask: 'End Task',
+    shutdown: 'Shut Down',
+    cancel: 'Cancel',
+  },
   explorer: {
     back: 'Back',
     forward: 'Forward',

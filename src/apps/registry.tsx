@@ -12,14 +12,13 @@ import { Sol1 } from '@react95/icons/Sol1';
 import { Winmine1 } from '@react95/icons/Winmine1';
 import { Timedate } from '@react95/icons/Timedate';
 import { Unmute } from '@react95/icons/Unmute';
-import { User } from '@react95/icons/User';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { profile } from '../content/profile';
 import { AssistantIcon } from './AssistantIcon';
 import { MsDosIcon } from './MsDosIcon';
 import { NetscapeIcon, NetscapeWindowIcon } from './NetscapeIcon';
 import { SaForceIcon } from './SaForceIcon';
-import { MouseIcon, UsersIcon } from './systemIcons';
+import { MouseIcon, UserIcon, UsersIcon } from './systemIcons';
 import { IcqIcon } from './IcqIcon';
 import { NapsterIcon } from './NapsterIcon';
 import { WinampIcon } from './WinampIcon';
@@ -79,7 +78,7 @@ export const desktopApps: DesktopApp[] = [
   {
     id: 'about',
     title: 'Über mich',
-    icon: User,
+    icon: UserIcon,
     kind: 'window',
     component: lazyNamed(() => import('./AboutApp'), 'AboutApp'),
     defaultSize: { width: 620, height: 520 },
