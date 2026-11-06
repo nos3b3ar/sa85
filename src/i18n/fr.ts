@@ -141,6 +141,9 @@ export const fr: Messages = {
     },
     recycle: {
       intro: 'Contient les fichiers et dossiers que vous avez supprimés. La Corbeille est vide.',
+      introFilled: 'Contient les icônes du bureau que vous avez supprimées. Faites glisser un élément sur le bureau ou choisissez Restaurer.',
+      itemInfo: 'Icône du bureau supprimée. Faites-la glisser sur le bureau pour la restaurer.',
+      restore: 'Restaurer',
     },
   },
   look: {

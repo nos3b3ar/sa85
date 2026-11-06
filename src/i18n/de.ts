@@ -143,6 +143,9 @@ export const de = {
     },
     recycle: {
       intro: 'Enthält Dateien und Ordner, die Sie gelöscht haben. Der Papierkorb ist leer.',
+      introFilled: 'Enthält Desktop-Symbole, die Sie gelöscht haben. Ziehen Sie ein Objekt auf den Desktop oder wählen Sie „Wiederherstellen“.',
+      itemInfo: 'Gelöschtes Desktop-Symbol. Zum Wiederherstellen auf den Desktop ziehen.',
+      restore: 'Wiederherstellen',
     },
   },
   look: {

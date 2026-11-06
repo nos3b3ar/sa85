@@ -141,6 +141,9 @@ export const en: Messages = {
     },
     recycle: {
       intro: 'Contains files and folders that you have deleted. The Recycle Bin is empty.',
+      introFilled: 'Contains desktop icons that you have deleted. Drag an item to the desktop or choose Restore.',
+      itemInfo: 'Deleted desktop icon. Drag it to the desktop to restore it.',
+      restore: 'Restore',
     },
   },
   look: {

@@ -93,6 +93,8 @@ export type Settings = {
   /** Einwahl-Dialog des Retro-Browsers nicht erneut zeigen. */
   autoConnect: boolean;
   iconPositions: Record<string, { x: number; y: number }>;
+  /** Desktop-Symbole im Papierkorb, älteste zuerst. Endgültig löschen gibt es nicht. */
+  recycled: string[];
   /** Ausgewählter Office-Assistent auf dem Desktop. */
   assistant: AssistantId;
   /** Ob der Assistent auf dem Desktop sichtbar ist. */
@@ -148,6 +150,7 @@ export const defaultSettings: Settings = {
   saverMarqueeText: 'Willkommen auf dem Schreibtisch von Stefan Andernach!',
   autoConnect: false,
   iconPositions: {},
+  recycled: [],
   assistant: 'merlin',
   assistantEnabled: true,
   assistantSetupDone: true,
@@ -282,6 +285,9 @@ function load(): Settings {
       ...defaultSettings,
       ...stored,
       iconPositions: readIconPositions(stored.iconPositions),
+      recycled: Array.isArray(stored.recycled)
+        ? [...new Set(stored.recycled.filter((id): id is string => typeof id === 'string' && id !== 'recycle'))]
+        : [],
       assistantPosition: readPoint(stored.assistantPosition),
       locale: oneOf(locales, stored.locale, defaultSettings.locale),
       mouse: readMouse(stored.mouse),

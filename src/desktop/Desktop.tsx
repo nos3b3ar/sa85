@@ -5,6 +5,8 @@ import { getSettings, updateSettings, useSettings } from '../settings/settings';
 import { desktopApps, getApp } from '../apps/registry';
 import { useT, windowTitle } from '../i18n';
 import { defaultIconPosition } from './iconLayout';
+import { arrowDirections, nextIcon } from './iconNav';
+import { canRecycle, recycleApp, recycleBinId } from './recycleBin';
 import { shouldShowDstDialog, type DstNotice } from '../utils/dst';
 import { AppWindow } from './AppWindow';
 import { DesktopAssistant } from './DesktopAssistant';
@@ -35,6 +37,8 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
   const { windows, openApp, close, focus, minimize, move, toggleTask, toggleDesktop } = useWindows();
   const openedInitial = useRef(false);
   const bgPressRef = useRef<{ x: number; y: number; timer: number } | null>(null);
+  /** Pfeiltasten und Enter gehören dem Desktop, bis ein Fenster, Menü oder die Taskleiste angeklickt wird. */
+  const desktopFocused = useRef(true);
   const settings = useSettings();
   const [selected, setSelected] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,7 +48,12 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
   const [closeProgramOpen, setCloseProgramOpen] = useState(false);
   const [standby, setStandby] = useState(false);
   const [, setViewport] = useState(0);
+  const [overBin, setOverBin] = useState(false);
   const t = useT();
+  const visibleApps = desktopApps.filter((app) => app.showOnDesktop !== false && !settings.recycled.includes(app.id));
+  const iconPosition = (id: string) => settings.iconPositions[id] ?? defaultIconPosition(id);
+  const binPosition = iconPosition(recycleBinId);
+  const onBin = (cell: { x: number; y: number }) => cell.x === binPosition.x && cell.y === binPosition.y;
   const monitorMinutes = settings.powerTimeouts[settings.powerScheme].monitor;
   const leftHanded = settings.mouse.leftHanded;
 
@@ -79,14 +88,40 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (shutdownOpen || closeProgramOpen || menuOpen || standby) return;
       const target = event.target as HTMLElement | null;
-      const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
-      if (typing || shutdownOpen || closeProgramOpen || event.key !== 'Enter' || !selected) return;
-      openApp(selected);
+      const onDesktop = !target || target === document.body || target.closest('.desktop-icon') || target.classList.contains('desktop');
+      const windowOpen = windows.some((win) => !win.minimized);
+      if (!onDesktop || (windowOpen && !desktopFocused.current)) return;
+      const deleting = event.key === 'Delete' || (event.key === 'Backspace' && event.metaKey);
+      if (deleting && selected && canRecycle(selected)) {
+        event.preventDefault();
+        recycleApp(selected);
+        setSelected(null);
+        return;
+      }
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'Enter') {
+        if (!selected) return;
+        event.preventDefault();
+        setMenuOpen(false);
+        target?.blur();
+        desktopFocused.current = false;
+        openApp(selected);
+        return;
+      }
+      const direction = arrowDirections[event.key];
+      if (!direction) return;
+      event.preventDefault();
+      const icons = visibleApps.map((app) => ({ id: app.id, ...iconPosition(app.id) }));
+      const next = nextIcon(icons, selected, direction);
+      if (!next) return;
+      setSelected(next);
+      document.querySelector<HTMLElement>(`.desktop-icon[data-app-id="${next}"]`)?.focus({ preventScroll: true });
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openApp, selected, shutdownOpen, closeProgramOpen]);
+  }, [openApp, selected, shutdownOpen, closeProgramOpen, menuOpen, standby, windows, visibleApps, iconPosition]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -126,6 +161,28 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
 
   const activeWin = windows.find((win) => win.id === activeId);
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+      // Ohne fn meldet die Mac-Taste F4 je nach Browser ein Launch-/Spotlight-Kürzel statt F4; ⌥W als Ausweichkürzel.
+      const f4 = event.key === 'F4' || event.code === 'F4' || /launch|spotlight/i.test(`${event.key} ${event.code}`);
+      if (!f4 && event.code !== 'KeyW') return;
+      if (standby) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (closeProgramOpen) setCloseProgramOpen(false);
+      else if (shutdownOpen) setShutdownOpen(false);
+      else if (menuOpen) setMenuOpen(false);
+      else if (activeId) close(activeId);
+      else {
+        setContextMenu(null);
+        setShutdownOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [activeId, close, closeProgramOpen, shutdownOpen, menuOpen, standby]);
+
   const onBackground = (target: EventTarget) =>
     !(target as HTMLElement).closest(
       '.desktop-icon, .app-window, [data-start-root], .taskbar, .dst-window, .shutdown-window, .context-menu, .desktop-assistant',
@@ -136,6 +193,7 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
     if (!onBackground(event.target)) return;
     setSelected(null);
     setMenuOpen(false);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   };
 
   const clearBgPress = () => {
@@ -150,6 +208,12 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
       className="desktop"
       style={{ backgroundColor: settings.desktopColor }}
       onMouseDown={clearIfEmpty}
+      onPointerDownCapture={(event) => {
+        const onIcon = Boolean((event.target as HTMLElement).closest('.desktop-icon'));
+        desktopFocused.current = onIcon || onBackground(event.target);
+        const focused = document.activeElement;
+        if (!onIcon && focused instanceof HTMLElement && focused.closest('.desktop-icon')) focused.blur();
+      }}
       onMouseUp={(event) => {
         if (!leftHanded || event.button !== 0 || !onBackground(event.target)) return;
         setContextMenu({ x: event.clientX, y: event.clientY });
@@ -195,18 +259,27 @@ function DesktopView({ initialApp, onInitialAppOpened, onShutdown }: DesktopProp
         if (!leftHanded) setContextMenu({ x: event.clientX, y: event.clientY });
       }}
     >
-      {desktopApps.filter((app) => app.showOnDesktop !== false).map((app) => (
+      {visibleApps.map((app) => (
         <DesktopIcon
           key={app.id}
           app={app}
-          position={settings.iconPositions[app.id] ?? defaultIconPosition(app.id)}
+          position={iconPosition(app.id)}
           selected={selected === app.id}
+          dropTarget={app.id === recycleBinId && overBin}
+          onDragCell={canRecycle(app.id) ? (cell) => setOverBin(Boolean(cell && onBin(cell))) : undefined}
           onSelect={() => setSelected(app.id)}
           onOpen={() => {
             setMenuOpen(false);
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            desktopFocused.current = false;
             openApp(app.id);
           }}
           onMove={(position) => {
+            if (canRecycle(app.id) && onBin(position)) {
+              recycleApp(app.id);
+              setSelected(null);
+              return;
+            }
             updateSettings({
               iconPositions: { ...getSettings().iconPositions, [app.id]: position },
             });

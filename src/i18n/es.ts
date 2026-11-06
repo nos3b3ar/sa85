@@ -141,6 +141,9 @@ export const es: Messages = {
     },
     recycle: {
       intro: 'Contiene los archivos y carpetas que ha eliminado. La Papelera de reciclaje está vacía.',
+      introFilled: 'Contiene los iconos del escritorio que ha eliminado. Arrastre un elemento al escritorio o elija Restaurar.',
+      itemInfo: 'Icono del escritorio eliminado. Arrástrelo al escritorio para restaurarlo.',
+      restore: 'Restaurar',
     },
   },
   look: {

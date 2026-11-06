@@ -9,7 +9,6 @@ import { PowerOn } from '@react95/icons/PowerOn';
 import { ReaderCd } from '@react95/icons/ReaderCd';
 import { ReaderClosed } from '@react95/icons/ReaderClosed';
 import { ReaderDisket } from '@react95/icons/ReaderDisket';
-import { RecycleEmpty } from '@react95/icons/RecycleEmpty';
 import { Timedate } from '@react95/icons/Timedate';
 import { Unmute } from '@react95/icons/Unmute';
 import { machine } from '../../boot/bootScript';
@@ -17,6 +16,7 @@ import { AssistantIcon } from '../AssistantIcon';
 import { appTitle, type Messages } from '../../i18n';
 import { desktopApps, type DesktopIconComponent } from '../registry';
 import { MouseIcon, UsersIcon } from '../systemIcons';
+import { RecycleIcon } from '../win98Icons';
 
 export type FolderId = 'computer' | 'control' | 'games' | 'recycle';
 
@@ -35,8 +35,12 @@ export type FolderDef = {
   icon: DesktopIconComponent;
   parent: FolderId | null;
   intro: string;
+  /** Ersetzt intro, sobald der Ordner etwas enthält. */
+  introFilled?: string;
   status: string;
-  items: () => FolderItem[];
+  /** Objekte lassen sich wiederherstellen oder auf den Desktop ziehen (Papierkorb). */
+  restorable?: boolean;
+  items: (recycled: string[]) => FolderItem[];
 };
 
 export function buildFolders(t: Messages): Record<FolderId, FolderDef> {
@@ -104,11 +108,16 @@ export function buildFolders(t: Messages): Record<FolderId, FolderDef> {
     },
     recycle: {
       title: t.apps.recycle,
-      icon: RecycleEmpty,
+      icon: RecycleIcon,
       parent: null,
       intro: e.recycle.intro,
+      introFilled: e.recycle.introFilled,
       status: '0 Byte',
-      items: () => [],
+      restorable: true,
+      items: (recycled) => recycled.flatMap((id) => {
+        const app = desktopApps.find((item) => item.id === id);
+        return app ? [{ id: app.id, label: appTitle(t, app), icon: app.icon, description: e.recycle.itemInfo }] : [];
+      }),
     },
   };
 }

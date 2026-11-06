@@ -12,6 +12,9 @@ type DesktopIconProps = {
   onSelect: () => void;
   onOpen: () => void;
   onMove: (position: IconPoint) => void;
+  /** Rasterzelle unter dem gezogenen Symbol, null nach dem Loslassen. */
+  onDragCell?: (cell: IconPoint | null) => void;
+  dropTarget?: boolean;
 };
 
 /** Verknüpfungspfeil von Windows 95: weißes Kästchen mit schwarzem Bogenpfeil unten links am Symbol. */
@@ -27,7 +30,7 @@ function ShortcutArrow() {
 const mouseDragThreshold = 4;
 const coarseDragThreshold = 16;
 
-export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove }: DesktopIconProps) {
+export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove, onDragCell, dropTarget }: DesktopIconProps) {
   const Icon = app.icon;
   const t = useT();
   const { look } = useSettings();
@@ -41,6 +44,7 @@ export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove 
     const current = drag.current;
     drag.current = null;
     if (current?.moved && liveRef.current) onMove(snapIconPosition(liveRef.current));
+    if (current?.moved) onDragCell?.(null);
     liveRef.current = null;
     setLive(null);
     return Boolean(current?.moved);
@@ -49,7 +53,10 @@ export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove 
   return (
     <button
       type="button"
-      className={['desktop-icon', selected ? 'is-selected' : '', live ? 'is-dragging' : ''].filter(Boolean).join(' ')}
+      data-app-id={app.id}
+      className={['desktop-icon', selected ? 'is-selected' : '', live ? 'is-dragging' : '', dropTarget ? 'is-drop-target' : '']
+        .filter(Boolean)
+        .join(' ')}
       style={{ left: spot.x, top: spot.y }}
       onPointerDown={(event) => {
         if (!activate.isPrimary(event)) return;
@@ -75,6 +82,7 @@ export function DesktopIcon({ app, position, selected, onSelect, onOpen, onMove 
         current.moved = true;
         liveRef.current = next;
         setLive(next);
+        onDragCell?.(snapIconPosition(next));
       }}
       onPointerUp={(event) => {
         if (finishDrag()) activate.reset();
